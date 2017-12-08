@@ -15,6 +15,7 @@ use HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\BitlyResourceOwner;
 
 class BitlyResourceOwnerTest extends GenericOAuth2ResourceOwnerTest
 {
+    protected $resourceOwnerClass = BitlyResourceOwner::class;
     protected $userResponse = <<<json
 {
     "data": {
@@ -26,14 +27,9 @@ class BitlyResourceOwnerTest extends GenericOAuth2ResourceOwnerTest
 }
 json;
     protected $paths = array(
-        'identifier'     => 'data.login',
-        'nickname'       => 'data.display_name',
-        'realname'       => 'data.full_name',
+        'identifier' => 'data.login',
+        'nickname' => 'data.display_name',
+        'realname' => 'data.full_name',
         'profilepicture' => 'data.profile_image',
     );
-
-    protected function setUpResourceOwner($name, $httpUtils, array $options)
-    {
-        return new BitlyResourceOwner($this->buzzClient, $httpUtils, $options, $name, $this->storage);
-    }
 }

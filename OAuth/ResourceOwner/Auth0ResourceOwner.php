@@ -11,52 +11,73 @@
 
 namespace HWI\Bundle\OAuthBundle\OAuth\ResourceOwner;
 
-use Buzz\Message\RequestInterface as HttpRequestInterface;
 use Symfony\Component\OptionsResolver\Options;
-use Symfony\Component\OptionsResolver\OptionsResolverInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
- * Auth0ResourceOwner
+ * Auth0ResourceOwner.
  *
  * @author Hernan Rajchert <hrajchert@gmail.com>
  */
 class Auth0ResourceOwner extends GenericOAuth2ResourceOwner
 {
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     protected $paths = array(
-        'identifier'     => 'user_id',
-        'nickname'       => 'nickname',
-        'realname'       => 'name',
-        'email'          => 'email',
+        'identifier' => 'user_id',
+        'nickname' => 'nickname',
+        'realname' => 'name',
+        'email' => 'email',
         'profilepicture' => 'picture',
     );
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     protected function doGetTokenRequest($url, array $parameters = array())
     {
-
-        $headers = array(
-            'Content-Type' => 'application/x-www-form-urlencoded'
+        return $this->httpRequest(
+            $url,
+            http_build_query($parameters, '', '&'),
+            $this->getRequestHeaders(),
+            'POST'
         );
-
-        return $this->httpRequest($url, http_build_query($parameters, '', '&'), $headers, HttpRequestInterface::METHOD_POST);
     }
 
+    /**
+     * {@inheritdoc}
+     */
+    protected function doGetUserInformationRequest($url, array $parameters = array())
+    {
+        return $this->httpRequest(
+            $url,
+            http_build_query($parameters, '', '&'),
+            $this->getRequestHeaders()
+        );
+    }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
-    protected function configureOptions(OptionsResolverInterface $resolver)
+    protected function configureOptions(OptionsResolver $resolver)
     {
         parent::configureOptions($resolver);
+
+        $auth0Client = base64_encode(json_encode(array(
+            'name' => 'HWIOAuthBundle',
+            'version' => 'unknown',
+            'environment' => array(
+                'name' => 'PHP',
+                'version' => \PHP_VERSION,
+            ),
+        )));
+
         $resolver->setDefaults(array(
-            'authorization_url'   => '{base_url}/authorize',
-            'access_token_url'    => '{base_url}/oauth/token',
-            'infos_url'           => '{base_url}/userinfo',
+            'authorization_url' => '{base_url}/authorize?auth0Client='.$auth0Client,
+            'access_token_url' => '{base_url}/oauth/token',
+            'infos_url' => '{base_url}/userinfo',
+            'auth0_client' => $auth0Client,
         ));
 
         $resolver->setRequired(array(
@@ -67,19 +88,22 @@ class Auth0ResourceOwner extends GenericOAuth2ResourceOwner
             return str_replace('{base_url}', $options['base_url'], $value);
         };
 
-        // Symfony <2.6 BC
-        if (method_exists($resolver, 'setNormalizer')) {
-            $resolver
-                ->setNormalizer('authorization_url', $normalizer)
-                ->setNormalizer('access_token_url', $normalizer)
-                ->setNormalizer('infos_url', $normalizer)
-            ;
-        } else {
-            $resolver->setNormalizers(array(
-                'authorization_url' => $normalizer,
-                'access_token_url'  => $normalizer,
-                'infos_url'         => $normalizer,
-            ));
+        $resolver->setNormalizer('authorization_url', $normalizer);
+        $resolver->setNormalizer('access_token_url', $normalizer);
+        $resolver->setNormalizer('infos_url', $normalizer);
+    }
+
+    /**
+     * @param array $headers
+     *
+     * @return array
+     */
+    private function getRequestHeaders(array $headers = array())
+    {
+        if (isset($this->options['auth0_client'])) {
+            $headers['Auth0-Client'] = $this->options['auth0_client'];
         }
+
+        return $headers;
     }
 }

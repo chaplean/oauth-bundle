@@ -11,30 +11,42 @@
 
 namespace HWI\Bundle\OAuthBundle\Tests\OAuth\ResourceOwner;
 
+use Http\Discovery\MessageFactoryDiscovery;
 use HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\JiraResourceOwner;
+use HWI\Bundle\OAuthBundle\Tests\Fixtures\CustomUserResponse;
+use Symfony\Component\Security\Http\HttpUtils;
 
 class JiraResourceOwnerTest extends GenericOAuth1ResourceOwnerTest
 {
+    protected $resourceOwnerClass = JiraResourceOwner::class;
     protected $userResponse = '{"name": "asm89", "displayName": "Alexander"}';
-    protected $paths        = array(
+    protected $paths = array(
         'identifier' => 'name',
-        'nickname'   => 'name',
-        'realname'   => 'displayName',
+        'nickname' => 'name',
+        'realname' => 'displayName',
     );
 
     public function testGetUserInformation()
     {
-        $this->markTestSkipped('This tests needs to be fixed.');
-
         $this
-            ->buzzClient->expects($this->exactly(2))
+            ->httpClient->expects($this->exactly(2))
             ->method('send')
-            ->will($this->returnCallback(array($this, 'buzzSendMock')))
-        ;
-        $this->buzzResponse = $this->userResponse;
-        $this->buzzResponseContentType = 'application/json; charset=utf-8';
+            ->will($this->returnCallback(function ($method, $uri, array $headers = [], $body = null) {
+                $headers += array(
+                    'Content-Type' => 'application/json; charset=utf-8',
+                );
 
-        $accessToken  = array('oauth_token' => 'token', 'oauth_token_secret' => 'secret');
+                return MessageFactoryDiscovery::find()
+                    ->createResponse(
+                        $this->httpResponseHttpCode,
+                        null,
+                        $headers,
+                        $this->userResponse
+                    )
+                ;
+            }));
+
+        $accessToken = array('oauth_token' => 'token', 'oauth_token_secret' => 'secret');
         $userResponse = $this->resourceOwner->getUserInformation($accessToken);
 
         $this->assertEquals('asm89', $userResponse->getUsername());
@@ -46,18 +58,45 @@ class JiraResourceOwnerTest extends GenericOAuth1ResourceOwnerTest
 
     public function testCustomResponseClass()
     {
-        $this->markTestSkipped('This tests needs to be fixed.');
-
-        $class         = '\HWI\Bundle\OAuthBundle\Tests\Fixtures\CustomUserResponse';
+        $class = CustomUserResponse::class;
         $resourceOwner = $this->createResourceOwner($this->resourceOwnerName, array('user_response_class' => $class));
 
         $this
-            ->buzzClient->expects($this->exactly(2))
+            ->httpClient->expects($this->at(0))
             ->method('send')
-            ->will($this->returnCallback(array($this, 'buzzSendMock')))
+            ->will($this->returnCallback(function ($method, $uri, array $headers = [], $body = null) {
+                $headers += array(
+                    'Content-Type' => 'application/json; charset=utf-8',
+                );
+
+                return MessageFactoryDiscovery::find()
+                    ->createResponse(
+                        $this->httpResponseHttpCode,
+                        null,
+                        $headers,
+                        $this->userResponse
+                    )
+                ;
+            }))
         ;
-        $this->buzzResponse = '';
-        $this->buzzResponseContentType = 'text/plain';
+        $this
+            ->httpClient->expects($this->at(1))
+            ->method('send')
+            ->will($this->returnCallback(function ($method, $uri, array $headers = [], $body = null) {
+                $headers += array(
+                    'Content-Type' => 'text/plain',
+                );
+
+                return MessageFactoryDiscovery::find()
+                    ->createResponse(
+                        $this->httpResponseHttpCode,
+                        null,
+                        $headers,
+                        ''
+                    )
+                ;
+            }))
+        ;
 
         /** @var $userResponse \HWI\Bundle\OAuthBundle\Tests\Fixtures\CustomUserResponse */
         $userResponse = $resourceOwner->getUserInformation(array('oauth_token' => 'token', 'oauth_token_secret' => 'secret'));
@@ -67,19 +106,21 @@ class JiraResourceOwnerTest extends GenericOAuth1ResourceOwnerTest
         $this->assertEquals('foo', $userResponse->getNickname());
     }
 
-    protected function setUpResourceOwner($name, $httpUtils, array $options)
+    protected function setUpResourceOwner($name, HttpUtils $httpUtils, array $options)
     {
-        $options = array_merge(
-            array(
-                // Used in option resolver to adjust all URLs that could be called
-                'base_url'         => 'http://localhost/',
+        return parent::setUpResourceOwner(
+            $name,
+            $httpUtils,
+            array_merge(
+                array(
+                    // Used in option resolver to adjust all URLs that could be called
+                    'base_url' => 'http://localhost/',
 
-                // This is to prevent errors with not existing .pem file
-                'signature_method' => 'PLAINTEXT',
-            ),
-            $options
+                    // This is to prevent errors with not existing .pem file
+                    'signature_method' => 'PLAINTEXT',
+                ),
+                $options
+            )
         );
-
-        return new JiraResourceOwner($this->buzzClient, $httpUtils, $options, $name, $this->storage);
     }
 }

@@ -12,9 +12,11 @@
 namespace HWI\Bundle\OAuthBundle\Tests\OAuth\ResourceOwner;
 
 use HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\StereomoodResourceOwner;
+use HWI\Bundle\OAuthBundle\Tests\Fixtures\CustomUserResponse;
 
 class StereomoodResourceOwnerTest extends GenericOAuth1ResourceOwnerTest
 {
+    protected $resourceOwnerClass = StereomoodResourceOwner::class;
     protected $userResponse = <<<json
 {
     "oauth_token": "token"
@@ -22,14 +24,14 @@ class StereomoodResourceOwnerTest extends GenericOAuth1ResourceOwnerTest
 json;
     protected $paths = array(
         'identifier' => 'oauth_token',
-        'nickname'   => 'oauth_token'
+        'nickname' => 'oauth_token',
     );
 
     public function testGetUserInformation()
     {
         $accessToken = array(
-            'oauth_token'        => 'token',
-            'oauth_token_secret' => 'secret'
+            'oauth_token' => 'token',
+            'oauth_token_secret' => 'secret',
         );
 
         $userResponse = $this->resourceOwner->getUserInformation($accessToken);
@@ -44,12 +46,12 @@ json;
 
     public function testCustomResponseClass()
     {
-        $class         = '\HWI\Bundle\OAuthBundle\Tests\Fixtures\CustomUserResponse';
+        $class = CustomUserResponse::class;
         $resourceOwner = $this->createResourceOwner('oauth1', array('user_response_class' => $class));
 
         $accessToken = array(
-            'oauth_token'        => 'token',
-            'oauth_token_secret' => 'secret'
+            'oauth_token' => 'token',
+            'oauth_token_secret' => 'secret',
         );
 
         $userResponse = $resourceOwner->getUserInformation($accessToken);
@@ -58,10 +60,5 @@ json;
         $this->assertEquals('foo666', $userResponse->getUsername());
         $this->assertEquals('foo', $userResponse->getNickname());
         $this->assertEquals('token', $userResponse->getAccessToken());
-    }
-
-    protected function setUpResourceOwner($name, $httpUtils, array $options)
-    {
-        return new StereomoodResourceOwner($this->buzzClient, $httpUtils, $options, $name, $this->storage);
     }
 }

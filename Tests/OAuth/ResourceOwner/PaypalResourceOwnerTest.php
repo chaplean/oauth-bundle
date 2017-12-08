@@ -14,12 +14,13 @@ namespace HWI\Bundle\OAuthBundle\Tests\OAuth\ResourceOwner;
 use HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\PaypalResourceOwner;
 
 /**
- * Class PaypalResourceOwnerTest
+ * Class PaypalResourceOwnerTest.
  *
  * @author Berny Cantos <be@rny.cc>
  */
 class PaypalResourceOwnerTest extends GenericOAuth2ResourceOwnerTest
 {
+    protected $resourceOwnerClass = PaypalResourceOwner::class;
     protected $userResponse = <<<json
 {
     "user_id": "1",
@@ -29,17 +30,12 @@ class PaypalResourceOwnerTest extends GenericOAuth2ResourceOwnerTest
 json;
     protected $paths = array(
         'identifier' => 'user_id',
-        'nickname'   => 'email',
-        'realname'   => 'name',
+        'nickname' => 'email',
+        'realname' => 'name',
     );
 
     protected $expectedUrls = array(
         'authorization_url' => 'http://user.auth/?test=2&response_type=code&client_id=clientid&scope=openid+email&redirect_uri=http%3A%2F%2Fredirect.to%2F',
         'authorization_url_csrf' => 'http://user.auth/?test=2&response_type=code&client_id=clientid&scope=openid+email&state=random&redirect_uri=http%3A%2F%2Fredirect.to%2F',
     );
-
-    protected function setUpResourceOwner($name, $httpUtils, array $options)
-    {
-        return new PaypalResourceOwner($this->buzzClient, $httpUtils, $options, $name, $this->storage);
-    }
 }

@@ -11,8 +11,8 @@
 
 namespace HWI\Bundle\OAuthBundle\Security\Http;
 
-use HWI\Bundle\OAuthBundle\OAuth\ResourceOwnerInterface;
-use Symfony\Component\DependencyInjection\ContainerAware;
+use Symfony\Component\DependencyInjection\ContainerAwareInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Http\HttpUtils;
 
@@ -22,7 +22,7 @@ use Symfony\Component\Security\Http\HttpUtils;
  *
  * @author Alexander <iam.asm89@gmail.com>
  */
-class ResourceOwnerMap extends ContainerAware
+class ResourceOwnerMap implements ContainerAwareInterface, ResourceOwnerMapInterface
 {
     /**
      * @var HttpUtils
@@ -40,46 +40,54 @@ class ResourceOwnerMap extends ContainerAware
     protected $possibleResourceOwners;
 
     /**
+     * @var ContainerInterface
+     */
+    protected $container;
+
+    /**
      * Constructor.
      *
      * @param HttpUtils $httpUtils              HttpUtils
-     * @param array     $possibleResourceOwners Array with possible resource owners names.
-     * @param array     $resourceOwners         Array with configured resource owners.
+     * @param array     $possibleResourceOwners array with possible resource owners names
+     * @param array     $resourceOwners         array with configured resource owners
      */
     public function __construct(HttpUtils $httpUtils, array $possibleResourceOwners, $resourceOwners)
     {
-        $this->httpUtils              = $httpUtils;
+        $this->httpUtils = $httpUtils;
         $this->possibleResourceOwners = $possibleResourceOwners;
-        $this->resourceOwners         = $resourceOwners;
+        $this->resourceOwners = $resourceOwners;
     }
 
     /**
-     * Gets the appropriate resource owner given the name.
-     *
-     * @param string $name
-     *
-     * @return null|ResourceOwnerInterface
+     * {@inheritdoc}
+     */
+    public function setContainer(ContainerInterface $container = null)
+    {
+        $this->container = $container;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function hasResourceOwnerByName($name)
+    {
+        return isset($this->resourceOwners[$name], $this->possibleResourceOwners[$name]);
+    }
+
+    /**
+     * {@inheritdoc}
      */
     public function getResourceOwnerByName($name)
     {
-        if (!isset($this->resourceOwners[$name])) {
-            return null;
-        }
-        if (!in_array($name, $this->possibleResourceOwners)) {
+        if (!$this->hasResourceOwnerByName($name)) {
             return null;
         }
 
-        $service = $this->container->get('hwi_oauth.resource_owner.'.$name);
-
-        return $service;
+        return $this->container->get('hwi_oauth.resource_owner.'.$name);
     }
 
     /**
-     * Gets the appropriate resource owner for a request.
-     *
-     * @param Request $request
-     *
-     * @return null|array
+     * {@inheritdoc}
      */
     public function getResourceOwnerByRequest(Request $request)
     {
@@ -93,11 +101,7 @@ class ResourceOwnerMap extends ContainerAware
     }
 
     /**
-     * Gets the check path for given resource name.
-     *
-     * @param string $name
-     *
-     * @return null|string
+     * {@inheritdoc}
      */
     public function getResourceOwnerCheckPath($name)
     {
@@ -109,9 +113,7 @@ class ResourceOwnerMap extends ContainerAware
     }
 
     /**
-     * Get all the resource owners.
-     *
-     * @return array
+     * {@inheritdoc}
      */
     public function getResourceOwners()
     {

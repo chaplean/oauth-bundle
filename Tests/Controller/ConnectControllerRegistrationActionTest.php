@@ -1,10 +1,24 @@
 <?php
 
+/*
+ * This file is part of the HWIOAuthBundle package.
+ *
+ * (c) Hardware.Info <opensource@hardware.info>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace HWI\Bundle\OAuthBundle\Tests\Controller;
 
+use FOS\UserBundle\Form\Factory\FactoryInterface;
+use HWI\Bundle\OAuthBundle\Form\RegistrationFormHandlerInterface;
+use HWI\Bundle\OAuthBundle\HWIOAuthEvents;
 use HWI\Bundle\OAuthBundle\Tests\Fixtures\User;
+use Symfony\Component\Form\Form;
+use Symfony\Component\Security\Http\SecurityEvents;
 
-class ConnectConnectControllerRegistrationActionTest extends AbstractConnectControllerTest
+class ConnectControllerRegistrationActionTest extends AbstractConnectControllerTest
 {
     /**
      * @expectedException \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
@@ -22,11 +36,7 @@ class ConnectConnectControllerRegistrationActionTest extends AbstractConnectCont
      */
     public function testAlreadyConnected()
     {
-        $this->getAuthorizationChecker()->expects($this->once())
-            ->method('isGranted')
-            ->with('IS_AUTHENTICATED_REMEMBERED')
-            ->willReturn(true)
-        ;
+        $this->mockAuthorizationCheck();
 
         $this->controller->registrationAction($this->request, time());
     }
@@ -45,21 +55,9 @@ class ConnectConnectControllerRegistrationActionTest extends AbstractConnectCont
             ->willReturn(new \Exception())
         ;
 
-        $this->controller->registrationAction($this->request, $key);
-    }
-
-    /**
-     * @expectedException \Exception
-     * @expectedExceptionMessage Cannot register an account.
-     */
-    public function testCannotRegisterBadKey()
-    {
-        $key = time() - 500;
-
         $this->session->expects($this->once())
-            ->method('get')
+            ->method('remove')
             ->with('_hwi_oauth.registration_error.'.$key)
-            ->willReturn($this->createAccountNotLinkedException())
         ;
 
         $this->controller->registrationAction($this->request, $key);
@@ -75,9 +73,16 @@ class ConnectConnectControllerRegistrationActionTest extends AbstractConnectCont
             ->willReturn($this->createAccountNotLinkedException())
         ;
 
+        $this->session->expects($this->once())
+            ->method('remove')
+            ->with('_hwi_oauth.registration_error.'.$key)
+        ;
+
         $this->makeRegistrationForm();
 
-        $registrationFormHandler = $this->getMock('\HWI\Bundle\OAuthBundle\Form\RegistrationFormHandlerInterface');
+        $registrationFormHandler = $this->getMockBuilder(RegistrationFormHandlerInterface::class)
+            ->disableOriginalConstructor()
+            ->getMock();
         $registrationFormHandler->expects($this->once())
             ->method('process')
             ->withAnyParameters()
@@ -85,9 +90,15 @@ class ConnectConnectControllerRegistrationActionTest extends AbstractConnectCont
         ;
         $this->container->set('hwi_oauth.registration.form.handler', $registrationFormHandler);
 
-        $this->templating->expects($this->once())
-            ->method('renderResponse')
-            ->with('HWIOAuthBundle:Connect:registration.html.twig')
+        $this->eventDispatcher->expects($this->once())->method('dispatch');
+        $this->eventDispatcher->expects($this->at(0))
+            ->method('dispatch')
+            ->with(HWIOAuthEvents::REGISTRATION_INITIALIZE)
+        ;
+
+        $this->twig->expects($this->once())
+            ->method('render')
+            ->with('@HWIOAuth/Connect/registration.html.twig')
         ;
 
         $this->controller->registrationAction($this->request, $key);
@@ -105,7 +116,9 @@ class ConnectConnectControllerRegistrationActionTest extends AbstractConnectCont
 
         $this->makeRegistrationForm();
 
-        $registrationFormHandler = $this->getMock('\HWI\Bundle\OAuthBundle\Form\RegistrationFormHandlerInterface');
+        $registrationFormHandler = $this->getMockBuilder(RegistrationFormHandlerInterface::class)
+            ->disableOriginalConstructor()
+            ->getMock();
         $registrationFormHandler->expects($this->once())
             ->method('process')
             ->withAnyParameters()
@@ -117,8 +130,25 @@ class ConnectConnectControllerRegistrationActionTest extends AbstractConnectCont
             ->method('connect')
         ;
 
-        $this->eventDispatcher->expects($this->once())
+        $this->eventDispatcher->expects($this->exactly(3))->method('dispatch');
+        $this->eventDispatcher->expects($this->at(0))
             ->method('dispatch')
+            ->with(HWIOAuthEvents::REGISTRATION_SUCCESS)
+        ;
+
+        $this->eventDispatcher->expects($this->at(1))
+            ->method('dispatch')
+            ->with(SecurityEvents::INTERACTIVE_LOGIN)
+        ;
+
+        $this->eventDispatcher->expects($this->at(2))
+            ->method('dispatch')
+            ->with(HWIOAuthEvents::REGISTRATION_COMPLETED)
+        ;
+
+        $this->twig->expects($this->once())
+            ->method('render')
+            ->with('@HWIOAuth/Connect/registration_success.html.twig')
         ;
 
         $this->controller->registrationAction($this->request, $key);
@@ -126,19 +156,27 @@ class ConnectConnectControllerRegistrationActionTest extends AbstractConnectCont
 
     private function makeRegistrationForm()
     {
-        $registrationForm = $this->getMockBuilder('\Symfony\Component\Form\Form')
-            ->disableOriginalConstructor()->getMock();
+        $registrationForm = $this->getMockBuilder(Form::class)
+            ->disableOriginalConstructor()
+            ->getMock();
         $registrationForm->expects($this->any())
             ->method('getData')
             ->willReturn(new User());
-        $registrationFormFactory = $this->getMock('\FOS\UserBundle\Form\Factory\FactoryInterface');
-        $registrationFormFactory->expects($this->any())
-            ->method('createForm')
-            ->willReturn($registrationForm)
-        ;
-        $this->container->set('hwi_oauth.registration.form.factory', $registrationFormFactory);
-        // FOSUser 1.3 BC. To be removed.
-        $this->container->set('hwi_oauth.registration.form', $registrationForm);
 
+        $this->container->setParameter('hwi_oauth.fosub_enabled', true);
+
+        if (interface_exists('FOS\UserBundle\Form\Factory\FactoryInterface')) {
+            $registrationFormFactory = $this->getMockBuilder(FactoryInterface::class)
+                ->disableOriginalConstructor()
+                ->getMock();
+            $registrationFormFactory->expects($this->any())
+                ->method('createForm')
+                ->willReturn($registrationForm);
+
+            $this->container->set('hwi_oauth.registration.form.factory', $registrationFormFactory);
+        } else {
+            // FOSUser 1.3 BC. To be removed.
+            $this->container->set('hwi_oauth.registration.form', $registrationForm);
+        }
     }
 }

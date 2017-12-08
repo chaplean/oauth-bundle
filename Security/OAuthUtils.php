@@ -12,29 +12,31 @@
 namespace HWI\Bundle\OAuthBundle\Security;
 
 use HWI\Bundle\OAuthBundle\OAuth\ResourceOwnerInterface;
-use HWI\Bundle\OAuthBundle\Security\Http\ResourceOwnerMap;
+use HWI\Bundle\OAuthBundle\Security\Http\ResourceOwnerMapInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
-use Symfony\Component\Security\Core\SecurityContextInterface;
 use Symfony\Component\Security\Http\HttpUtils;
 
 /**
- * OAuthUtils
- *
  * @author Alexander <iam.asm89@gmail.com>
  * @author Joseph Bielawski <stloyd@gmail.com>
  * @author Francisco Facioni <fran6co@gmail.com>
  */
 class OAuthUtils
 {
-    const SIGNATURE_METHOD_HMAC      = 'HMAC-SHA1';
-    const SIGNATURE_METHOD_RSA       = 'RSA-SHA1';
+    const SIGNATURE_METHOD_HMAC = 'HMAC-SHA1';
+    const SIGNATURE_METHOD_RSA = 'RSA-SHA1';
     const SIGNATURE_METHOD_PLAINTEXT = 'PLAINTEXT';
 
     /**
-     * @var boolean
+     * @var bool
      */
     protected $connect;
+
+    /**
+     * @var string
+     */
+    protected $grantRule;
 
     /**
      * @var HttpUtils
@@ -42,48 +44,39 @@ class OAuthUtils
     protected $httpUtils;
 
     /**
-     * @var ResourceOwnerMap
+     * @var ResourceOwnerMapInterface[]
      */
-    protected $ownerMap;
+    protected $ownerMaps = array();
 
     /**
-     * @var SecurityContextInterface
-     *
-     * @deprecated since 0.4. To be removed in 1.0. Use $authorizationChecker property instead.
-     */
-    protected $securityContext;
-
-    /**
-     * SecurityContextInterface for Symfony <2.6
-     * To be removed with all related logic (constructor, configs, extension)
-     *
-     * @var AuthorizationCheckerInterface|SecurityContextInterface
+     * @var AuthorizationCheckerInterface
      */
     protected $authorizationChecker;
 
     /**
-     * @param HttpUtils                                              $httpUtils
-     * @param AuthorizationCheckerInterface|SecurityContextInterface $authorizationChecker
-     * @param boolean                                                $connect
+     * @param HttpUtils                     $httpUtils
+     * @param AuthorizationCheckerInterface $authorizationChecker
+     * @param bool                          $connect
+     * @param string                        $grantRule
      */
-    public function __construct(HttpUtils $httpUtils, $authorizationChecker, $connect)
-    {
-        if (!$authorizationChecker instanceof AuthorizationCheckerInterface && !$authorizationChecker instanceof SecurityContextInterface) {
-            throw new \InvalidArgumentException('Argument 2 should be an instance of Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface or Symfony\Component\Security\Core\SecurityContextInterface');
-        }
-
-        $this->httpUtils            = $httpUtils;
+    public function __construct(
+        HttpUtils $httpUtils,
+        AuthorizationCheckerInterface $authorizationChecker,
+        $connect,
+        $grantRule
+    ) {
+        $this->httpUtils = $httpUtils;
         $this->authorizationChecker = $authorizationChecker;
-        $this->securityContext      = $this->authorizationChecker;
-        $this->connect              = $connect;
+        $this->connect = $connect;
+        $this->grantRule = $grantRule;
     }
 
     /**
-     * @param ResourceOwnerMap $ownerMap
+     * @param ResourceOwnerMapInterface $ownerMap
      */
-    public function setResourceOwnerMap(ResourceOwnerMap $ownerMap)
+    public function addResourceOwnerMap(ResourceOwnerMapInterface $ownerMap)
     {
-        $this->ownerMap = $ownerMap;
+        $this->ownerMaps[] = $ownerMap;
     }
 
     /**
@@ -91,7 +84,11 @@ class OAuthUtils
      */
     public function getResourceOwners()
     {
-        $resourceOwners = $this->ownerMap->getResourceOwners();
+        $resourceOwners = array();
+
+        foreach ($this->ownerMaps as $ownerMap) {
+            $resourceOwners = array_merge($resourceOwners, $ownerMap->getResourceOwners());
+        }
 
         return array_keys($resourceOwners);
     }
@@ -108,8 +105,8 @@ class OAuthUtils
     {
         $resourceOwner = $this->getResourceOwner($name);
         if (null === $redirectUrl) {
-            if (!$this->connect || !$this->authorizationChecker->isGranted('IS_AUTHENTICATED_REMEMBERED')) {
-                $redirectUrl = $this->httpUtils->generateUri($request, $this->ownerMap->getResourceOwnerCheckPath($name));
+            if (!$this->connect || !$this->authorizationChecker->isGranted($this->grantRule)) {
+                $redirectUrl = $this->httpUtils->generateUri($request, $this->getResourceOwnerCheckPath($name));
             } else {
                 $redirectUrl = $this->getServiceAuthUrl($request, $resourceOwner);
             }
@@ -127,13 +124,12 @@ class OAuthUtils
     public function getServiceAuthUrl(Request $request, ResourceOwnerInterface $resourceOwner)
     {
         if ($resourceOwner->getOption('auth_with_one_url')) {
-            $redirectUrl = $this->httpUtils->generateUri($request, $this->ownerMap->getResourceOwnerCheckPath($resourceOwner->getName())).'?authenticated=true';
-        } else {
-            $request->attributes->set('service', $resourceOwner->getName());
-            $redirectUrl = $this->httpUtils->generateUri($request, 'hwi_oauth_connect_service');
+            return $this->httpUtils->generateUri($request, $this->getResourceOwnerCheckPath($resourceOwner->getName()));
         }
 
-        return $redirectUrl;
+        $request->attributes->set('service', $resourceOwner->getName());
+
+        return $this->httpUtils->generateUri($request, 'hwi_oauth_connect_service');
     }
 
     /**
@@ -153,7 +149,7 @@ class OAuthUtils
     }
 
     /**
-     * Sign the request parameters
+     * Sign the request parameters.
      *
      * @param string $method          Request method
      * @param string $url             Request url
@@ -229,8 +225,13 @@ class OAuthUtils
                     throw new \RuntimeException('RSA-SHA1 signature method requires the OpenSSL extension.');
                 }
 
-                $privateKey = openssl_pkey_get_private(file_get_contents($clientSecret), $tokenSecret);
-                $signature  = false;
+                if (0 === strpos($clientSecret, '-----BEGIN')) {
+                    $privateKey = openssl_pkey_get_private($clientSecret, $tokenSecret);
+                } else {
+                    $privateKey = openssl_pkey_get_private(file_get_contents($clientSecret), $tokenSecret);
+                }
+
+                $signature = false;
 
                 openssl_sign($baseString, $signature, $privateKey);
                 openssl_free_key($privateKey);
@@ -256,11 +257,29 @@ class OAuthUtils
      */
     protected function getResourceOwner($name)
     {
-        $resourceOwner = $this->ownerMap->getResourceOwnerByName($name);
-        if (!$resourceOwner instanceof ResourceOwnerInterface) {
-            throw new \RuntimeException(sprintf("No resource owner with name '%s'.", $name));
+        foreach ($this->ownerMaps as $ownerMap) {
+            $resourceOwner = $ownerMap->getResourceOwnerByName($name);
+            if ($resourceOwner instanceof ResourceOwnerInterface) {
+                return $resourceOwner;
+            }
         }
 
-        return $resourceOwner;
+        throw new \RuntimeException(sprintf("No resource owner with name '%s'.", $name));
+    }
+
+    /**
+     * @param string $name
+     *
+     * @return null|string
+     */
+    protected function getResourceOwnerCheckPath($name)
+    {
+        foreach ($this->ownerMaps as $ownerMap) {
+            if ($potentialResourceOwnerCheckPath = $ownerMap->getResourceOwnerCheckPath($name)) {
+                return $potentialResourceOwnerCheckPath;
+            }
+        }
+
+        return null;
     }
 }

@@ -14,7 +14,7 @@ namespace HWI\Bundle\OAuthBundle\Security\Core\Authentication\Token;
 use Symfony\Component\Security\Core\Authentication\Token\AbstractToken;
 
 /**
- * OAuthToken
+ * OAuthToken.
  *
  * @author Geoffrey Bachelet <geoffrey.bachelet@gmail.com>
  * @author Alexander <iam.asm89@gmail.com>
@@ -38,12 +38,12 @@ class OAuthToken extends AbstractToken
     private $refreshToken;
 
     /**
-     * @var integer
+     * @var int
      */
     private $expiresIn;
 
     /**
-     * @var integer
+     * @var int
      */
     private $createdAt;
 
@@ -71,7 +71,7 @@ class OAuthToken extends AbstractToken
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function getCredentials()
     {
@@ -127,10 +127,10 @@ class OAuthToken extends AbstractToken
                 $this->tokenSecret = $token['oauth_token_secret'];
             }
 
-            $this->rawToken    = $token;
+            $this->rawToken = $token;
         } else {
             $this->accessToken = $token;
-            $this->rawToken    = array('access_token' => $token);
+            $this->rawToken = array('access_token' => $token);
         }
     }
 
@@ -159,7 +159,7 @@ class OAuthToken extends AbstractToken
     }
 
     /**
-     * @param integer $expiresIn The duration in seconds of the access token lifetime
+     * @param int $expiresIn The duration in seconds of the access token lifetime
      */
     public function setExpiresIn($expiresIn)
     {
@@ -168,7 +168,7 @@ class OAuthToken extends AbstractToken
     }
 
     /**
-     * @return integer
+     * @return int
      */
     public function getExpiresIn()
     {
@@ -176,7 +176,7 @@ class OAuthToken extends AbstractToken
     }
 
     /**
-     * @param integer $createdAt The token creation date in seconds
+     * @param int $createdAt The token creation date in seconds
      */
     public function setCreatedAt($createdAt)
     {
@@ -184,7 +184,7 @@ class OAuthToken extends AbstractToken
     }
 
     /**
-     * @return integer
+     * @return int
      */
     public function getCreatedAt()
     {
@@ -192,7 +192,7 @@ class OAuthToken extends AbstractToken
     }
 
     /**
-     * @return integer
+     * @return int
      */
     public function getExpiresAt()
     {
@@ -222,7 +222,7 @@ class OAuthToken extends AbstractToken
     /**
      * Returns if the `access_token` is expired.
      *
-     * @return boolean True if the `access_token` is expired.
+     * @return bool true if the `access_token` is expired
      */
     public function isExpired()
     {
@@ -254,7 +254,7 @@ class OAuthToken extends AbstractToken
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function serialize()
     {
@@ -265,39 +265,28 @@ class OAuthToken extends AbstractToken
             $this->expiresIn,
             $this->createdAt,
             $this->resourceOwnerName,
-            parent::serialize()
+            parent::serialize(),
         ));
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function unserialize($serialized)
     {
         $data = unserialize($serialized);
-        if (7 === count($data)) {
-            list(
-                $this->accessToken,
-                $this->rawToken,
-                $this->refreshToken,
-                $this->expiresIn,
-                $this->createdAt,
-                $this->resourceOwnerName,
-                $parent,
-            ) = $data;
-        } else {
-            // @deprecated Remove this in 0.5
-            list(
-                $this->accessToken,
-                $this->rawToken,
-                $this->refreshToken,
-                $this->expiresIn,
-                $this->resourceOwnerName,
-                $parent,
-            ) = $data;
+        // add a few extra elements in the array to ensure that we have enough keys when un-serializing
+        // older data which does not include all properties.
+        $data = array_merge($data, array_fill(0, 4, null));
 
-            $this->createdAt = time();
-        }
+        list(
+            $this->accessToken,
+            $this->rawToken,
+            $this->refreshToken,
+            $this->expiresIn,
+            $this->createdAt,
+            $this->resourceOwnerName,
+            $parent) = $data;
 
         if (!$this->tokenSecret && isset($this->rawToken['oauth_token_secret'])) {
             $this->tokenSecret = $this->rawToken['oauth_token_secret'];

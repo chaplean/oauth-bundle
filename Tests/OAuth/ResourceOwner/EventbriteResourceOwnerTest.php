@@ -16,6 +16,7 @@ use HWI\Bundle\OAuthBundle\OAuth\Response\AbstractUserResponse;
 
 class EventbriteResourceOwnerTest extends GenericOAuth2ResourceOwnerTest
 {
+    protected $resourceOwnerClass = EventbriteResourceOwner::class;
     protected $userResponse = <<<json
 {
     "user": {
@@ -28,28 +29,23 @@ json;
 
     protected $paths = array(
         'identifier' => 'user.user_id',
-        'nickname'   => 'user.first_name',
-        'firstname'  => 'user.first_name',
-        'lastname'   => 'user.last_name',
-        'realname'   => array('user.first_name', 'user.last_name'),
-        'email'      => 'email',
+        'nickname' => 'user.first_name',
+        'firstname' => 'user.first_name',
+        'lastname' => 'user.last_name',
+        'realname' => array('user.first_name', 'user.last_name'),
+        'email' => 'email',
     );
 
     public function testGetUserInformationFirstAndLastName()
     {
-        $this->mockBuzz($this->userResponse, 'application/json; charset=utf-8');
+        $this->mockHttpClient($this->userResponse, 'application/json; charset=utf-8');
 
         /**
-         * @var $userResponse AbstractUserResponse
+         * @var AbstractUserResponse
          */
         $userResponse = $this->resourceOwner->getUserInformation(array('access_token' => 'token'));
 
         $this->assertEquals('bar', $userResponse->getFirstName());
         $this->assertEquals('foo', $userResponse->getLastName());
-    }
-
-    protected function setUpResourceOwner($name, $httpUtils, array $options)
-    {
-        return new EventbriteResourceOwner($this->buzzClient, $httpUtils, $options, $name, $this->storage);
     }
 }

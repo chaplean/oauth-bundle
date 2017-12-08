@@ -11,28 +11,28 @@
 
 namespace HWI\Bundle\OAuthBundle\OAuth\ResourceOwner;
 
-use Symfony\Component\OptionsResolver\OptionsResolverInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
- * DailymotionResourceOwner
+ * DailymotionResourceOwner.
  *
  * @author Joseph Bielawski <stloyd@gmail.com>
  */
 class DailymotionResourceOwner extends GenericOAuth2ResourceOwner
 {
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     protected $paths = array(
-        'identifier'     => 'id',
-        'nickname'       => 'screenname',
-        'realname'       => 'fullname', // requires 'userinfo' scope
-        'email'          => 'email', // requires 'email' scope
-        'profilepicture' => 'avatar_medium_url'
+        'identifier' => 'id',
+        'nickname' => 'screenname',
+        'realname' => 'fullname', // requires 'userinfo' scope
+        'email' => 'email', // requires 'email' scope
+        'profilepicture' => 'avatar_medium_url',
     );
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function getAuthorizationUrl($redirectUri, array $extraParameters = array())
     {
@@ -40,27 +40,21 @@ class DailymotionResourceOwner extends GenericOAuth2ResourceOwner
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
-    protected function configureOptions(OptionsResolverInterface $resolver)
+    protected function configureOptions(OptionsResolver $resolver)
     {
         parent::configureOptions($resolver);
 
         $resolver->setDefaults(array(
             'authorization_url' => 'https://api.dailymotion.com/oauth/authorize',
-            'access_token_url'  => 'https://api.dailymotion.com/oauth/token',
-            'infos_url'         => 'https://api.dailymotion.com/me',
+            'access_token_url' => 'https://api.dailymotion.com/oauth/token',
+            'infos_url' => 'https://api.dailymotion.com/me',
 
-            'display'           => null,
+            'display' => null,
         ));
 
-        if (method_exists($resolver, 'setDefined')) {
-            // @link http://www.dailymotion.com/doc/api/authentication.html#dialog-form-factors
-            $resolver->setAllowedValues('display', array('page', 'popup', 'mobile', null));
-        } else {
-            $resolver->setAllowedValues(array(
-                'display' => array('page', 'popup', 'mobile', null),
-            ));
-        }
+        // @link http://www.dailymotion.com/doc/api/authentication.html#dialog-form-factors
+        $resolver->setAllowedValues('display', array('page', 'popup', 'mobile', null));
     }
 }

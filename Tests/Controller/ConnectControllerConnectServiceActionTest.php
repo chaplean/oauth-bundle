@@ -1,10 +1,21 @@
 <?php
 
+/*
+ * This file is part of the HWIOAuthBundle package.
+ *
+ * (c) Hardware.Info <opensource@hardware.info>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace HWI\Bundle\OAuthBundle\Tests\Controller;
 
+use HWI\Bundle\OAuthBundle\HWIOAuthEvents;
 use HWI\Bundle\OAuthBundle\Tests\Fixtures\CustomOAuthToken;
+use Symfony\Component\Form\FormInterface;
 
-class ConnectConnectControllerConnectServiceActionTest extends AbstractConnectControllerTest
+class ConnectControllerConnectServiceActionTest extends AbstractConnectControllerTest
 {
     /**
      * @expectedException \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
@@ -22,13 +33,21 @@ class ConnectConnectControllerConnectServiceActionTest extends AbstractConnectCo
      */
     public function testAlreadyConnected()
     {
-        $this->getAuthorizationChecker()->expects($this->once())
-            ->method('isGranted')
-            ->with('IS_AUTHENTICATED_REMEMBERED')
-            ->willReturn(false)
-        ;
+        $this->mockAuthorizationCheck(false);
 
         $this->controller->connectServiceAction($this->request, 'facebook');
+    }
+
+    /**
+     * @expectedException \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
+     */
+    public function testUnknownResourceOwner()
+    {
+        $this->container->setParameter('hwi_oauth.firewall_names', []);
+
+        $this->mockAuthorizationCheck();
+
+        $this->controller->connectServiceAction($this->request, 'unknown');
     }
 
     public function testConnectConfirm()
@@ -37,11 +56,7 @@ class ConnectConnectControllerConnectServiceActionTest extends AbstractConnectCo
 
         $this->request->query->set('key', $key);
 
-        $this->getAuthorizationChecker()->expects($this->once())
-            ->method('isGranted')
-            ->with('IS_AUTHENTICATED_REMEMBERED')
-            ->willReturn(true)
-        ;
+        $this->mockAuthorizationCheck();
 
         $this->session->expects($this->once())
             ->method('get')
@@ -49,15 +64,28 @@ class ConnectConnectControllerConnectServiceActionTest extends AbstractConnectCo
             ->willReturn(array())
         ;
 
-        $form = $this->getMock('\Symfony\Component\Form\FormInterface');
+        $this->tokenStorage->expects($this->once())
+            ->method('getToken')
+            ->willReturn(new CustomOAuthToken())
+        ;
+
+        $form = $this->getMockBuilder(FormInterface::class)
+            ->disableOriginalConstructor()
+            ->getMock();
         $this->formFactory->expects($this->once())
             ->method('create')
             ->willReturn($form)
         ;
 
-        $this->templating->expects($this->once())
-            ->method('renderResponse')
-            ->with('HWIOAuthBundle:Connect:connect_confirm.html.twig')
+        $this->eventDispatcher->expects($this->once())->method('dispatch');
+        $this->eventDispatcher->expects($this->at(0))
+            ->method('dispatch')
+            ->with(HWIOAuthEvents::CONNECT_INITIALIZE)
+        ;
+
+        $this->twig->expects($this->once())
+            ->method('render')
+            ->with('@HWIOAuth/Connect/connect_confirm.html.twig')
         ;
 
         $this->controller->connectServiceAction($this->request, 'facebook');
@@ -70,11 +98,7 @@ class ConnectConnectControllerConnectServiceActionTest extends AbstractConnectCo
         $this->request->query->set('key', $key);
         $this->request->setMethod('POST');
 
-        $this->getAuthorizationChecker()->expects($this->once())
-            ->method('isGranted')
-            ->with('IS_AUTHENTICATED_REMEMBERED')
-            ->willReturn(true)
-        ;
+        $this->mockAuthorizationCheck();
 
         $this->session->expects($this->once())
             ->method('get')
@@ -82,7 +106,9 @@ class ConnectConnectControllerConnectServiceActionTest extends AbstractConnectCo
             ->willReturn(array())
         ;
 
-        $form = $this->getMock('\Symfony\Component\Form\FormInterface');
+        $form = $this->getMockBuilder(FormInterface::class)
+            ->disableOriginalConstructor()
+            ->getMock();
         $this->formFactory->expects($this->once())
             ->method('create')
             ->willReturn($form)
@@ -91,14 +117,24 @@ class ConnectConnectControllerConnectServiceActionTest extends AbstractConnectCo
         $form->expects($this->once())->method('isSubmitted')->willReturn(true);
         $form->expects($this->once())->method('isValid')->willReturn(true);
 
-        $this->getTokenStorage()->expects($this->once())
+        $this->tokenStorage->expects($this->once())
             ->method('getToken')
             ->willReturn(new CustomOAuthToken())
         ;
 
-        $this->templating->expects($this->once())
-            ->method('renderResponse')
-            ->with('HWIOAuthBundle:Connect:connect_success.html.twig')
+        $this->eventDispatcher->expects($this->exactly(2))->method('dispatch');
+        $this->eventDispatcher->expects($this->at(0))
+            ->method('dispatch')
+            ->with(HWIOAuthEvents::CONNECT_CONFIRMED)
+        ;
+        $this->eventDispatcher->expects($this->at(1))
+            ->method('dispatch')
+            ->with(HWIOAuthEvents::CONNECT_COMPLETED)
+        ;
+
+        $this->twig->expects($this->once())
+            ->method('render')
+            ->with('@HWIOAuth/Connect/connect_success.html.twig')
         ;
 
         $this->controller->connectServiceAction($this->request, 'facebook');
@@ -111,11 +147,7 @@ class ConnectConnectControllerConnectServiceActionTest extends AbstractConnectCo
         $this->request->query->set('key', $key);
         $this->container->setParameter('hwi_oauth.connect.confirmation', false);
 
-        $this->getAuthorizationChecker()->expects($this->once())
-            ->method('isGranted')
-            ->with('IS_AUTHENTICATED_REMEMBERED')
-            ->willReturn(true)
-        ;
+        $this->mockAuthorizationCheck();
 
         $this->session->expects($this->once())
             ->method('get')
@@ -123,14 +155,24 @@ class ConnectConnectControllerConnectServiceActionTest extends AbstractConnectCo
             ->willReturn(array())
         ;
 
-        $this->getTokenStorage()->expects($this->once())
+        $this->tokenStorage->expects($this->once())
             ->method('getToken')
             ->willReturn(new CustomOAuthToken())
         ;
 
-        $this->templating->expects($this->once())
-            ->method('renderResponse')
-            ->with('HWIOAuthBundle:Connect:connect_success.html.twig')
+        $this->eventDispatcher->expects($this->exactly(2))->method('dispatch');
+        $this->eventDispatcher->expects($this->at(0))
+            ->method('dispatch')
+            ->with(HWIOAuthEvents::CONNECT_CONFIRMED)
+        ;
+        $this->eventDispatcher->expects($this->at(1))
+            ->method('dispatch')
+            ->with(HWIOAuthEvents::CONNECT_COMPLETED)
+        ;
+
+        $this->twig->expects($this->once())
+            ->method('render')
+            ->with('@HWIOAuth/Connect/connect_success.html.twig')
         ;
 
         $this->controller->connectServiceAction($this->request, 'facebook');
@@ -142,11 +184,7 @@ class ConnectConnectControllerConnectServiceActionTest extends AbstractConnectCo
 
         $this->request->query->set('key', $key);
 
-        $this->getAuthorizationChecker()->expects($this->once())
-            ->method('isGranted')
-            ->with('IS_AUTHENTICATED_REMEMBERED')
-            ->willReturn(true)
-        ;
+        $this->mockAuthorizationCheck();
 
         $this->resourceOwner->expects($this->once())
             ->method('handles')
@@ -158,15 +196,22 @@ class ConnectConnectControllerConnectServiceActionTest extends AbstractConnectCo
             ->willReturn(array())
         ;
 
-        $form = $this->getMock('\Symfony\Component\Form\FormInterface');
+        $this->tokenStorage->expects($this->once())
+            ->method('getToken')
+            ->willReturn(new CustomOAuthToken())
+        ;
+
+        $form = $this->getMockBuilder(FormInterface::class)
+            ->disableOriginalConstructor()
+            ->getMock();
         $this->formFactory->expects($this->once())
             ->method('create')
             ->willReturn($form)
         ;
 
-        $this->templating->expects($this->once())
-            ->method('renderResponse')
-            ->with('HWIOAuthBundle:Connect:connect_confirm.html.twig')
+        $this->twig->expects($this->once())
+            ->method('render')
+            ->with('@HWIOAuth/Connect/connect_confirm.html.twig')
         ;
 
         $this->controller->connectServiceAction($this->request, 'facebook');

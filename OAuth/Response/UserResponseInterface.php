@@ -15,8 +15,6 @@ use HWI\Bundle\OAuthBundle\OAuth\ResponseInterface;
 use HWI\Bundle\OAuthBundle\Security\Core\Authentication\Token\OAuthToken;
 
 /**
- * UserResponseInterface
- *
  * @author Alexander <iam.asm89@gmail.com>
  * @author Joseph Bielawski <stloyd@gmail.com>
  */
@@ -26,8 +24,9 @@ interface UserResponseInterface extends ResponseInterface
      * Get the unique user identifier.
      *
      * Note that this is not always common known "username" because of implementation
-     * in Symfony2 framework. For more details follow link below.
-     * @link https://github.com/symfony/symfony/blob/2.1/src/Symfony/Component/Security/Core/User/UserProviderInterface.php#L20-L28
+     * in Symfony framework. For more details follow link below.
+     *
+     * @see https://github.com/symfony/symfony/blob/2.7/src/Symfony/Component/Security/Core/User/UserProviderInterface.php#L20-L28
      *
      * @return string
      */
@@ -109,4 +108,11 @@ interface UserResponseInterface extends ResponseInterface
      * @param OAuthToken $token
      */
     public function setOAuthToken(OAuthToken $token);
+
+    /**
+     * Get the raw token data from the request.
+     *
+     * @return OAuthToken
+     */
+    public function getOAuthToken();
 }

@@ -11,37 +11,37 @@
 
 namespace HWI\Bundle\OAuthBundle\OAuth\ResourceOwner;
 
-use Symfony\Component\OptionsResolver\OptionsResolverInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
- * BitlyResourceOwner
+ * BitlyResourceOwner.
  *
  * @author Joseph Bielawski <stloyd@gmail.com>
  */
 class BitlyResourceOwner extends GenericOAuth2ResourceOwner
 {
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     protected $paths = array(
-        'identifier'     => 'data.login',
-        'nickname'       => 'data.display_name',
-        'realname'       => 'data.full_name',
+        'identifier' => 'data.login',
+        'nickname' => 'data.display_name',
+        'realname' => 'data.full_name',
         'profilepicture' => 'data.profile_image',
     );
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
-    protected function configureOptions(OptionsResolverInterface $resolver)
+    protected function configureOptions(OptionsResolver $resolver)
     {
         parent::configureOptions($resolver);
 
         $resolver->setDefaults(array(
             'use_bearer_authorization' => false,
             'authorization_url' => 'https://bitly.com/oauth/authorize',
-            'access_token_url'  => 'https://api-ssl.bitly.com/oauth/access_token',
-            'infos_url'         => 'https://api-ssl.bitly.com/v3/user/info?format=json',
+            'access_token_url' => 'https://api-ssl.bitly.com/oauth/access_token',
+            'infos_url' => 'https://api-ssl.bitly.com/v3/user/info?format=json',
         ));
     }
 }

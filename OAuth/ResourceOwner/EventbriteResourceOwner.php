@@ -11,47 +11,46 @@
 
 namespace HWI\Bundle\OAuthBundle\OAuth\ResourceOwner;
 
-use Buzz\Message\RequestInterface as HttpRequestInterface;
-use Symfony\Component\OptionsResolver\OptionsResolverInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
- * EventbriteResourceOwner
+ * EventbriteResourceOwner.
  *
  * @author Joseph Bielawski <stloyd@gmail.com>
  */
 class EventbriteResourceOwner extends GenericOAuth2ResourceOwner
 {
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     protected $paths = array(
         'identifier' => 'user.user_id',
-        'nickname'   => 'user.first_name',
-        'firstname'  => 'user.first_name',
-        'lastname'   => 'user.last_name',
-        'realname'   => array('user.first_name', 'user.last_name'),
-        'email'      => 'email',
+        'nickname' => 'user.first_name',
+        'firstname' => 'user.first_name',
+        'lastname' => 'user.last_name',
+        'realname' => array('user.first_name', 'user.last_name'),
+        'email' => 'email',
     );
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     protected function doGetTokenRequest($url, array $parameters = array())
     {
-        return $this->httpRequest($url, http_build_query($parameters, '', '&'), array(), HttpRequestInterface::METHOD_POST);
+        return $this->httpRequest($url, http_build_query($parameters, '', '&'), array(), 'POST');
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
-    protected function configureOptions(OptionsResolverInterface $resolver)
+    protected function configureOptions(OptionsResolver $resolver)
     {
         parent::configureOptions($resolver);
 
         $resolver->setDefaults(array(
-            'authorization_url'        => 'https://www.eventbrite.com/oauth/authorize',
-            'access_token_url'         => 'https://www.eventbrite.com/oauth/token',
-            'infos_url'                => 'https://www.eventbrite.com/json/user_get',
+            'authorization_url' => 'https://www.eventbrite.com/oauth/authorize',
+            'access_token_url' => 'https://www.eventbrite.com/oauth/token',
+            'infos_url' => 'https://www.eventbrite.com/json/user_get',
 
             'use_bearer_authorization' => true,
         ));

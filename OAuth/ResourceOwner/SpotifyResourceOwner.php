@@ -12,7 +12,7 @@
 namespace HWI\Bundle\OAuthBundle\OAuth\ResourceOwner;
 
 use HWI\Bundle\OAuthBundle\Security\Core\Authentication\Token\OAuthToken;
-use Symfony\Component\OptionsResolver\OptionsResolverInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
  * @author Janne Savolainen <janne.savolainen@sempre.fi>
@@ -20,28 +20,28 @@ use Symfony\Component\OptionsResolver\OptionsResolverInterface;
 class SpotifyResourceOwner extends GenericOAuth2ResourceOwner
 {
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     protected $paths = array(
-        'identifier'     => 'id',
-        'nickname'       => 'id',
-        'realname'       => 'display_name',
-        'email'          => 'email'
+        'identifier' => 'id',
+        'nickname' => 'id',
+        'realname' => 'display_name',
+        'email' => 'email',
     );
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function getUserInformation(array $accessToken = null, array $extraParameters = array())
     {
         $url = $this->normalizeUrl($this->options['infos_url'], array(
-            'access_token' => $accessToken['access_token']
+            'access_token' => $accessToken['access_token'],
         ));
 
-        $content = $this->doGetUserInformationRequest($url)->getContent();
+        $content = $this->doGetUserInformationRequest($url)->getBody();
 
         $response = $this->getUserResponse();
-        $response->setResponse($content);
+        $response->setData((string) $content);
         $response->setResourceOwner($this);
         $response->setOAuthToken(new OAuthToken($accessToken));
 
@@ -49,16 +49,16 @@ class SpotifyResourceOwner extends GenericOAuth2ResourceOwner
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
-    protected function configureOptions(OptionsResolverInterface $resolver)
+    protected function configureOptions(OptionsResolver $resolver)
     {
         parent::configureOptions($resolver);
 
         $resolver->setDefaults(array(
             'authorization_url' => 'https://accounts.spotify.com/authorize',
-            'access_token_url'  => 'https://accounts.spotify.com/api/token',
-            'infos_url'         => 'https://api.spotify.com/v1/me'
+            'access_token_url' => 'https://accounts.spotify.com/api/token',
+            'infos_url' => 'https://api.spotify.com/v1/me',
         ));
     }
 }

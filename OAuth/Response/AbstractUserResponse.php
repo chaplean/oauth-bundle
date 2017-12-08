@@ -16,8 +16,6 @@ use HWI\Bundle\OAuthBundle\Security\Core\Authentication\Token\OAuthToken;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 
 /**
- * AbstractUserResponse
- *
  * @author Alexander <iam.asm89@gmail.com>
  */
 abstract class AbstractUserResponse implements UserResponseInterface
@@ -25,7 +23,7 @@ abstract class AbstractUserResponse implements UserResponseInterface
     /**
      * @var array
      */
-    protected $response;
+    protected $data;
 
     /**
      * @var ResourceOwnerInterface
@@ -96,24 +94,32 @@ abstract class AbstractUserResponse implements UserResponseInterface
     /**
      * {@inheritdoc}
      */
-    public function getResponse()
+    public function getOAuthToken()
     {
-        return $this->response;
+        return $this->oAuthToken;
     }
 
     /**
      * {@inheritdoc}
      */
-    public function setResponse($response)
+    public function getData()
     {
-        if (is_array($response)) {
-            $this->response = $response;
+        return $this->data;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setData($data)
+    {
+        if (is_array($data)) {
+            $this->data = $data;
         } else {
             // First check that response exists, due too bug: https://bugs.php.net/bug.php?id=54484
-            if (!$response) {
-                $this->response = array();
+            if (!$data) {
+                $this->data = [];
             } else {
-                $this->response = json_decode($response, true);
+                $this->data = json_decode($data, true);
 
                 if (JSON_ERROR_NONE !== json_last_error()) {
                     throw new AuthenticationException('Response is not a valid JSON code.');

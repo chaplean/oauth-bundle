@@ -16,6 +16,7 @@ use HWI\Bundle\OAuthBundle\OAuth\Response\AbstractUserResponse;
 
 class FoursquareResourceOwnerTest extends GenericOAuth2ResourceOwnerTest
 {
+    protected $resourceOwnerClass = FoursquareResourceOwner::class;
     protected $userResponse = <<<json
 {
     "response": {
@@ -30,27 +31,22 @@ json;
 
     protected $paths = array(
         'identifier' => 'response.user.id',
-        'firstname'  => 'response.user.firstName',
-        'lastname'   => 'response.user.lastName',
-        'nickname'   => 'response.user.firstName',
-        'realname'   => array('response.user.firstName', 'response.user.lastName'),
+        'firstname' => 'response.user.firstName',
+        'lastname' => 'response.user.lastName',
+        'nickname' => 'response.user.firstName',
+        'realname' => array('response.user.firstName', 'response.user.lastName'),
     );
 
     public function testGetUserInformationFirstAndLastName()
     {
-        $this->mockBuzz($this->userResponse, 'application/json; charset=utf-8');
+        $this->mockHttpClient($this->userResponse, 'application/json; charset=utf-8');
 
         /**
-         * @var $userResponse AbstractUserResponse
+         * @var AbstractUserResponse
          */
         $userResponse = $this->resourceOwner->getUserInformation(array('access_token' => 'token'));
 
         $this->assertEquals('bar', $userResponse->getFirstName());
         $this->assertEquals('foo', $userResponse->getLastName());
-    }
-
-    protected function setUpResourceOwner($name, $httpUtils, array $options)
-    {
-        return new FoursquareResourceOwner($this->buzzClient, $httpUtils, $options, $name, $this->storage);
     }
 }

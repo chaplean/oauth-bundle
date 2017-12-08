@@ -15,6 +15,7 @@ use HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\SoundcloudResourceOwner;
 
 class SoundcloudResourceOwnerTest extends GenericOAuth2ResourceOwnerTest
 {
+    protected $resourceOwnerClass = SoundcloudResourceOwner::class;
     protected $userResponse = <<<json
 {
     "id": "1",
@@ -24,18 +25,13 @@ class SoundcloudResourceOwnerTest extends GenericOAuth2ResourceOwnerTest
 json;
 
     protected $expectedUrls = array(
-        'authorization_url'      => 'http://user.auth/?test=2&response_type=code&client_id=clientid&scope=non-expiring&redirect_uri=http%3A%2F%2Fredirect.to%2F',
-        'authorization_url_csrf' => 'http://user.auth/?test=2&response_type=code&client_id=clientid&scope=non-expiring&state=random&redirect_uri=http%3A%2F%2Fredirect.to%2F'
+        'authorization_url' => 'http://user.auth/?test=2&response_type=code&client_id=clientid&scope=non-expiring&redirect_uri=http%3A%2F%2Fredirect.to%2F',
+        'authorization_url_csrf' => 'http://user.auth/?test=2&response_type=code&client_id=clientid&scope=non-expiring&state=random&redirect_uri=http%3A%2F%2Fredirect.to%2F',
     );
 
     protected $paths = array(
         'identifier' => 'id',
-        'nickname'   => 'username',
-        'realname'   => 'full_name',
+        'nickname' => 'username',
+        'realname' => 'full_name',
     );
-
-    protected function setUpResourceOwner($name, $httpUtils, array $options)
-    {
-        return new SoundcloudResourceOwner($this->buzzClient, $httpUtils, $options, $name, $this->storage);
-    }
 }

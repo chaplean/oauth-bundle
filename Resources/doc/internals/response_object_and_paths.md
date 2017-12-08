@@ -18,7 +18,7 @@ But enough theory, here is example how to fetch user email & picture while using
 # app/config/config.yml
 
 hwi_oauth:
-    firewall_name:         secured_area
+    firewall_names:        [secured_area]
     resource_owners:
         facebook:
             type:          facebook
@@ -51,21 +51,22 @@ as described below:
 ```yaml
 # app/config/config.yml
 hwi_oauth:
-   firewall_name:         secured_area
+   firewall_names:        [secured_area]
    resource_owners:
        linkedin:
            type:          linkedin
            client_id:     <client_id>
            client_secret: <client_secret>
            scope:         r_fullprofile
-           infos_url:     "http://api.linkedin.com/v1/people/~:(id,formatted-name,recommendations-received)"
+           infos_url:     "https://api.linkedin.com/v1/people/~:(id,formatted-name,recommendations-received)"
 ```
 
 Again the details can be accessed in i.e. `loadUserByOAuthUserResponse(UserResponseInterface $response)`:
 
 ```php
+// This method will return all data that was sent from resource owner
 /* @var $response \HWI\Bundle\OAuthBundle\OAuth\Response\UserResponseInterface */
-$data = $response->getResponse(); /* this method will return all data that was sent from resource owner */
+$data = $response->getData();
 
 var_dump(
    $data['recommendations-received']
@@ -78,7 +79,7 @@ owner into one! Check how this could look:
 ```yaml
 # app/config/config.yml
 hwi_oauth:
-   firewall_name:         secured_area
+   firewall_names:        [secured_area]
    resource_owners:
        linkedin:
            type:          vkontakte

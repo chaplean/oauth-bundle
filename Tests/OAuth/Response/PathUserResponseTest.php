@@ -11,6 +11,7 @@
 
 namespace HWI\Bundle\OAuthBundle\Tests\OAuth\Response;
 
+use HWI\Bundle\OAuthBundle\OAuth\ResourceOwnerInterface;
 use HWI\Bundle\OAuthBundle\OAuth\Response\PathUserResponse;
 
 class PathUserResponseTest extends \PHPUnit_Framework_TestCase
@@ -25,33 +26,35 @@ class PathUserResponseTest extends \PHPUnit_Framework_TestCase
         $this->responseObject = new PathUserResponse();
     }
 
-    public function testGetSetResponseWithJsonString()
+    public function testGetSetResponseDataWithJsonString()
     {
         $response = array('foo' => 'bar');
 
-        $this->responseObject->setResponse(json_encode($response));
-        $this->assertEquals($response, $this->responseObject->getResponse());
+        $this->responseObject->setData(json_encode($response));
+        $this->assertEquals($response, $this->responseObject->getData());
     }
 
-    public function testGetSetResponseWithPhpArray()
+    public function testGetSetResponseDataWithPhpArray()
     {
         $response = array('foo' => 'bar');
 
-        $this->responseObject->setResponse($response);
-        $this->assertEquals($response, $this->responseObject->getResponse());
+        $this->responseObject->setData($response);
+        $this->assertEquals($response, $this->responseObject->getData());
     }
 
     /**
      * @expectedException \Symfony\Component\Security\Core\Exception\AuthenticationException
      */
-    public function testSetInvalidResponse()
+    public function testSetInvalidResponseData()
     {
-        $this->responseObject->setResponse('not_json');
+        $this->responseObject->setData('not_json');
     }
 
     public function testGetSetResourceOwner()
     {
-        $resourceOwner = $this->getMock('\HWI\Bundle\OAuthBundle\OAuth\ResourceOwnerInterface');
+        $resourceOwner = $this->getMockBuilder(ResourceOwnerInterface::class)
+            ->disableOriginalConstructor()
+            ->getMock();
 
         $this->responseObject->setResourceOwner($resourceOwner);
         $this->assertEquals($resourceOwner, $this->responseObject->getResourceOwner());
@@ -60,12 +63,12 @@ class PathUserResponseTest extends \PHPUnit_Framework_TestCase
     public function testGetPathsReturnsDefaultDefinedPaths()
     {
         $paths = array(
-            'identifier'     => null,
-            'nickname'       => null,
-            'firstname'      => null,
-            'lastname'       => null,
-            'realname'       => null,
-            'email'          => null,
+            'identifier' => null,
+            'nickname' => null,
+            'firstname' => null,
+            'lastname' => null,
+            'realname' => null,
+            'email' => null,
             'profilepicture' => null,
         );
 
@@ -75,14 +78,14 @@ class PathUserResponseTest extends \PHPUnit_Framework_TestCase
     public function testSetPathsAddsNewPathsToAlreadyDefined()
     {
         $paths = array(
-            'identifier'     => null,
-            'nickname'       => null,
-            'firstname'      => null,
-            'lastname'       => null,
-            'realname'       => null,
-            'email'          => null,
+            'identifier' => null,
+            'nickname' => null,
+            'firstname' => null,
+            'lastname' => null,
+            'realname' => null,
+            'email' => null,
             'profilepicture' => null,
-            'foo'            => 'bar'
+            'foo' => 'bar',
         );
 
         $responseObject = new PathUserResponse();
@@ -95,7 +98,7 @@ class PathUserResponseTest extends \PHPUnit_Framework_TestCase
         $paths = array('identifier' => 'id');
 
         $this->responseObject->setPaths($paths);
-        $this->responseObject->setResponse(json_encode(array('id' => 666)));
+        $this->responseObject->setData(json_encode(array('id' => 666)));
 
         $this->assertEquals(666, $this->responseObject->getUsername());
     }
@@ -112,7 +115,7 @@ class PathUserResponseTest extends \PHPUnit_Framework_TestCase
         $paths = array('nickname' => 'foo');
 
         $this->responseObject->setPaths($paths);
-        $this->responseObject->setResponse(json_encode(array('foo' => 'bar')));
+        $this->responseObject->setData(json_encode(array('foo' => 'bar')));
 
         $this->assertEquals('bar', $this->responseObject->getNickname());
 
@@ -120,7 +123,7 @@ class PathUserResponseTest extends \PHPUnit_Framework_TestCase
         $paths = array('nickname' => 'foo.bar');
 
         $this->responseObject->setPaths($paths);
-        $this->responseObject->setResponse(json_encode(array('foo' => array('bar' => 'qux'))));
+        $this->responseObject->setData(json_encode(array('foo' => array('bar' => 'qux'))));
 
         $this->assertEquals('qux', $this->responseObject->getNickname());
     }
@@ -130,7 +133,7 @@ class PathUserResponseTest extends \PHPUnit_Framework_TestCase
         $paths = array('realname' => 'foo');
 
         $this->responseObject->setPaths($paths);
-        $this->responseObject->setResponse(json_encode(array('foo' => 'bar')));
+        $this->responseObject->setData(json_encode(array('foo' => 'bar')));
 
         $this->assertEquals('bar', $this->responseObject->getRealName());
     }
@@ -140,7 +143,7 @@ class PathUserResponseTest extends \PHPUnit_Framework_TestCase
         $paths = array('identifier' => 'non_existing');
 
         $this->responseObject->setPaths($paths);
-        $this->responseObject->setResponse(json_encode(array('foo' => 'bar')));
+        $this->responseObject->setData(json_encode(array('foo' => 'bar')));
 
         $this->assertNull($this->responseObject->getNickname());
     }
@@ -151,7 +154,7 @@ class PathUserResponseTest extends \PHPUnit_Framework_TestCase
 
         $responseObject = new PathUserResponse();
         $responseObject->setPaths($paths);
-        $responseObject->setResponse(json_encode(array('foo' => 'bar')));
+        $responseObject->setData(json_encode(array('foo' => 'bar')));
 
         $this->assertNull($responseObject->getNickname());
     }
@@ -161,7 +164,7 @@ class PathUserResponseTest extends \PHPUnit_Framework_TestCase
         $paths = array('email' => 'email');
 
         $this->responseObject->setPaths($paths);
-        $this->responseObject->setResponse(json_encode(array('email' => 'foo@bar.baz')));
+        $this->responseObject->setData(json_encode(array('email' => 'foo@bar.baz')));
 
         $this->assertEquals('foo@bar.baz', $this->responseObject->getEmail());
     }
@@ -171,7 +174,7 @@ class PathUserResponseTest extends \PHPUnit_Framework_TestCase
         $paths = array('email' => 'email');
 
         $this->responseObject->setPaths($paths);
-        $this->responseObject->setResponse(json_encode(array('no_email' => 'foo@bar.baz')));
+        $this->responseObject->setData(json_encode(array('no_email' => 'foo@bar.baz')));
 
         $this->assertNull($this->responseObject->getEmail());
     }
@@ -181,7 +184,7 @@ class PathUserResponseTest extends \PHPUnit_Framework_TestCase
         $paths = array('profilepicture' => 'picture');
 
         $this->responseObject->setPaths($paths);
-        $this->responseObject->setResponse(json_encode(array('picture' => 'http://img')));
+        $this->responseObject->setData(json_encode(array('picture' => 'http://img')));
 
         $this->assertEquals('http://img', $this->responseObject->getProfilePicture());
     }
@@ -191,7 +194,7 @@ class PathUserResponseTest extends \PHPUnit_Framework_TestCase
         $paths = array('profilepicture' => 'picture');
 
         $this->responseObject->setPaths($paths);
-        $this->responseObject->setResponse(json_encode(array('no_picture' => 'foo@bar.baz')));
+        $this->responseObject->setData(json_encode(array('no_picture' => 'foo@bar.baz')));
 
         $this->assertNull($this->responseObject->getProfilePicture());
     }
@@ -201,11 +204,11 @@ class PathUserResponseTest extends \PHPUnit_Framework_TestCase
         $paths = array('realname' => array('first_name', 'last_name'));
 
         $this->responseObject->setPaths($paths);
-        $this->responseObject->setResponse(array('first_name' => 'foo', 'last_name' => 'bar'));
+        $this->responseObject->setData(array('first_name' => 'foo', 'last_name' => 'bar'));
 
         $this->assertEquals('foo bar', $this->responseObject->getRealName());
 
-        $this->responseObject->setResponse(array('first_name' => null, 'last_name' => 'bar'));
+        $this->responseObject->setData(array('first_name' => null, 'last_name' => 'bar'));
 
         $this->assertEquals('bar', $this->responseObject->getRealName());
     }

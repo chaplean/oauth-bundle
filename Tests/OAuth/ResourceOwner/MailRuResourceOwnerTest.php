@@ -15,6 +15,7 @@ use HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\MailRuResourceOwner;
 
 class MailRuResourceOwnerTest extends GenericOAuth2ResourceOwnerTest
 {
+    protected $resourceOwnerClass = MailRuResourceOwner::class;
     protected $userResponse = <<<json
 [
     {
@@ -27,12 +28,7 @@ json;
 
     protected $paths = array(
         'identifier' => 'user_id',
-        'nickname'   => 'name',
-        'email'      => 'email',
+        'nickname' => 'name',
+        'email' => 'email',
     );
-
-    protected function setUpResourceOwner($name, $httpUtils, array $options)
-    {
-        return new MailRuResourceOwner($this->buzzClient, $httpUtils, $options, $name, $this->storage);
-    }
 }

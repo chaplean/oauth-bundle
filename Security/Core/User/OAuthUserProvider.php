@@ -17,14 +17,14 @@ use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\UserProviderInterface;
 
 /**
- * OAuthUserProvider
+ * OAuthUserProvider.
  *
  * @author Geoffrey Bachelet <geoffrey.bachelet@gmail.com>
  */
 class OAuthUserProvider implements UserProviderInterface, OAuthAwareUserProviderInterface
 {
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function loadUserByUsername($username)
     {
@@ -40,7 +40,7 @@ class OAuthUserProvider implements UserProviderInterface, OAuthAwareUserProvider
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function refreshUser(UserInterface $user)
     {
@@ -52,10 +52,10 @@ class OAuthUserProvider implements UserProviderInterface, OAuthAwareUserProvider
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function supportsClass($class)
     {
-        return $class === 'HWI\\Bundle\\OAuthBundle\\Security\\Core\\User\\OAuthUser';
+        return 'HWI\\Bundle\\OAuthBundle\\Security\\Core\\User\\OAuthUser' === $class;
     }
 }

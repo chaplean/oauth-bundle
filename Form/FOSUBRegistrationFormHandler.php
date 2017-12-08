@@ -22,8 +22,6 @@ use Symfony\Component\PropertyAccess\PropertyAccess;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
- * FOSUBRegistrationFormHandler
- *
  * @author Alexander <iam.asm89@gmail.com>
  */
 class FOSUBRegistrationFormHandler implements RegistrationFormHandlerInterface
@@ -49,17 +47,15 @@ class FOSUBRegistrationFormHandler implements RegistrationFormHandlerInterface
     protected $tokenGenerator;
 
     /**
-     * @var integer
+     * @var int
      */
     protected $iterations;
 
     /**
-     * Constructor.
-     *
      * @param UserManagerInterface $userManager    FOSUB user manager
      * @param MailerInterface      $mailer         FOSUB mailer
      * @param TokenGenerator       $tokenGenerator FOSUB token generator
-     * @param integer              $iterations     Amount of attempts that should be made to 'guess' a unique username
+     * @param int                  $iterations     Amount of attempts that should be made to 'guess' a unique username
      */
     public function __construct(UserManagerInterface $userManager, MailerInterface $mailer, TokenGenerator $tokenGenerator = null, $iterations = 5)
     {
@@ -70,7 +66,7 @@ class FOSUBRegistrationFormHandler implements RegistrationFormHandlerInterface
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function process(Request $request, Form $form, UserResponseInterface $userInformation)
     {
@@ -94,7 +90,7 @@ class FOSUBRegistrationFormHandler implements RegistrationFormHandlerInterface
         $form->setData($this->setUserInformation($user, $userInformation));
 
         if ($request->isMethod('POST')) {
-            $form->bind($request);
+            $form->handleRequest($request);
 
             return $form->isValid();
         }
@@ -117,7 +113,7 @@ class FOSUBRegistrationFormHandler implements RegistrationFormHandlerInterface
      *
      * @param string $name
      *
-     * @return string Name, or empty string if it failed after all the iterations.
+     * @return string name, or empty string if it failed after all the iterations
      */
     protected function getUniqueUserName($name)
     {
@@ -126,9 +122,9 @@ class FOSUBRegistrationFormHandler implements RegistrationFormHandlerInterface
 
         do {
             $user = $this->userManager->findUserByUsername($testName);
-        } while ($user !== null && $i < $this->iterations && $testName = $name.++$i);
+        } while (null !== $user && $i < $this->iterations && $testName = $name.++$i);
 
-        return $user !== null ? '' : $testName;
+        return null !== $user ? '' : $testName;
     }
 
     /**
@@ -137,7 +133,7 @@ class FOSUBRegistrationFormHandler implements RegistrationFormHandlerInterface
      * @param Request $request Active request
      * @param Form    $form    Form to process
      *
-     * @return mixed
+     * @return RegistrationFormHandler
      */
     protected function reconstructFormHandler(Request $request, Form $form)
     {
@@ -147,7 +143,7 @@ class FOSUBRegistrationFormHandler implements RegistrationFormHandlerInterface
     }
 
     /**
-     * Set user information from form
+     * Set user information from form.
      *
      * @param UserInterface         $user
      * @param UserResponseInterface $userInformation

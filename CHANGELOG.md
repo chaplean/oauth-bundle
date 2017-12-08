@@ -1,11 +1,115 @@
 Changelog
 =========
+## 0.6.0 (2017-12-01)
+* BC BREAK: Fully replaced Buzz library with usage of HTTPlug & Guzzle 6,
+* BC BREAK: `hwi.http_client` config options are remove. HTTP configuration must rely on the HTTPlug client,
+* BC BREAK: Template engine other than Twig are no longer supported,
+* BC BREAK: Option `hwi_oauth.templating_engine` was removed,
+* Added: Symfony 4 support,
+* Added: `php-http/httplug-bundle` support, to auto-provide needed HTTPlug services and get full Symfony integration,
+* Added: `hwi.http.client` and `hwi.http.message_factory` config keys to provide your own HTTPlug services,
+* Added: `HWIOAuthEvents`,
+* Added: `ResourceOwnerInterface::addPaths()` method for easier managing paths in resource owners,
+* Fixed: Update Facebook API to v2.8,
 
-## 0.4.0 (2015-??-??)
-* Added `UserResponseInterface#getFirstName()` method, also a new default path `firstname`
-  was added, this path holds the first name of user
-* Added `UserResponseInterface#getLastName()` method, also a new default path `lastname`
-  was added, this path holds the last name of user
+## 0.5.3 (2017-01-08)
+* Fixed: Bitbucket2 resource owner,
+* Fixed: GitHub resource owner documentation,
+* Fixed: Don't require any form for the connect feature,
+* Fixed: Uncaught exception with custom error page,
+* Fixed: `php-cs-fixer` updated to latest version & run on base code
+
+## 0.5.2 (2016-12-12)
+* Fixed: Prevent uncaught exception when redirecting to invalid route,
+* Fixed: Add more details too exception when account was not linked,
+* Fixed: Odnoklassinki resource owner,
+* Fixed: Office365 resource owner,
+* Fixed: StackExchange resource owner,
+* Fixed: WeChat resource owner,
+* Fixed: WindowsLive resource owner
+
+## 0.5.1 (2016-10-03)
+* Fixed error that could occur with message "302 Header already sent",
+* Exclude tests from Composer autoloader
+
+## 0.5.0 (2016-09-11)
+* Fixed: `OAuthHelper` should fallback to new `Request` in case of receiving `null`,
+* Fixed: Better `FOSUserBundle` integration,
+* Fixed: Serialization issue in `WechatResourceOwner`,
+* Fixed: Incorrect refresh token in `WechatResourceOwner`,
+* Fixed: Broken `TrelloResourceOwner`,
+* Fixed: Removed dead code in `OAuthProvider`,
+* Fixed: Update Facebook API to v2.7,
+* Added: Symfony 3 support,
+* Added: Redirect to `target_path` after successful registration/connection,
+* Added: Asana resource owner,
+* Added: Bitbucket resource owner,
+* Added: Clever resource owner,
+* Added: Itembase resource owner,
+* Added: Jawbon resource owner,
+* Added: Office365 resource owner,
+* Added: Wunderlist resource owner,
+* Added: Hungarian translation
+
+## 0.4.3 (2016-09-11)
+* Fixed: Request parameters are not copied into new Request on forward,
+* Fixed: Fixed scope deprecating message,
+* Fixed: Resolved deprecated message in ConnectController,
+* Fixed: Removed usage of deprecated code in tests
+
+## 0.4.2 (2016-07-27)
+* Fixed: Change Discogs URL from http to https,
+* Fixed: Update Facebook API URLs to not use outdated ones
+
+## 0.4.1 (2016-03-08)
+* Fixed: Remove usage of deprecated Twig function `form_enctype` & replace with usage of `form_start`/`form_end`,
+* Fixed: Mark as not fully compatible with Symfony `~3.0`,
+* Fixed: Multiple firewalls can now have different resource owners,
+* Fixed: Wrong URL generated for Safesforce resource owner,
+* Added: `include_email` option into Twitter resource owner,
+* Added: Hungarian translation,
+* Added: Documentation about FOSUser integration
+
+## 0.4.0 (2015-12-04)
+* [BC break] Added `UserResponseInterface#getFirstName()` method, also a new default path `firstname`
+  was added, this path holds the first name of user,
+* [BC break] Added `UserResponseInterface#getLastName()` method, also a new default path `lastname`
+  was added, this path holds the last name of user,
+* [BC break] Added `UserResponseInterface::getOAuthToken()` & basic implementation in `AbstractUserResponse`,
+* [BC break] `GenericOAuth1ResourceOwner::getRequestToken()` is now public method (was protected),
+* Added: configuration parameter `firewall_name` (will be removed in next major version)
+  renamed to `firewall_names` to support multiple firewalls,
+* Added: configuration parameter: `failed_auth_path` which contains route name, on which user
+  will be redirected after failure when connecting accounts (i.e. user denies connection),
+* Added: `appsecret_proof` functionality support to the Facebook resource owner,
+* Added: `sandbox` functionality support to the Salesforce resource owner,
+* Added Auth0 resource owner,
+* Added Azure resource owner,
+* Added BufferApp resource owner,
+* Added Deezer resource owner,
+* Added Discogs resource owner,
+* Added EveOnline resource owner,
+* Added Fiware resource owner,
+* Added Hubic resource owner,
+* Added Paypal resource owner,
+* Added Reddit resource owner,
+* Added Runkeeper resource owner,
+* Added Slack resource owner,
+* Added Spotify resource owner,
+* Added Soundcloud resource owner,
+* Added Strava resource owner,
+* Added Toshl resource owner,
+* Added Trakt resource owner,
+* Added Wechat resource owner,
+* Added Wordpress resource owner,
+* Added Xing resource owner,
+* Added Youtube resource owner,
+* Fixed: Revoking tokens for Facebook & Google resource owners,
+* Fixed: Instagram allows only GET calls to fetch user details,
+* Fixed: `ResourceOwnerMap` no longer depends on deprecated `ContainerAware` class,
+* Fixed: Wrong usage of `json_decode` in Mail.ru resource owner,
+* Fixed: Transform storage exceptions in OAuth1 resource owners into `AuthenticationException`
+* Fixed: Default scopes & fields for VKontakte resource owner
 
 ## 0.3.9 (2015-08-28)
 * Fix: Remove deprecated Twig features

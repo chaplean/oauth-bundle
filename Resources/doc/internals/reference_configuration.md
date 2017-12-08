@@ -41,11 +41,11 @@ hwi_oauth:
             authorization_url:   https://path.to/oauth/v2/authorize
             infos_url:           https://path.to/api/user
             scope:               "user_details"
-            user_response_class: HWI\Bundle\OAuthBundle\OAuth\Response\AdvancedPathUserResponse
+            user_response_class: HWI\Bundle\OAuthBundle\OAuth\Response\PathUserResponse
             paths:
                 identifier: id
                 nickname:   username
-                email:      email
+                realname:   fullname
 
         my_custom_oauth1:
             type:                oauth1
@@ -61,8 +61,8 @@ hwi_oauth:
                 identifier: id
                 nickname:   username
 
-    # name of the firewall the oauth bundle is active in
-    firewall_name: secured_area
+    # list of firewall names the oauth bundle is active in
+    firewall_names: [secured_area]
 
     # optional target_path_parameter to provide an explicit return URL
     #target_path_parameter: _destination
@@ -89,15 +89,8 @@ hwi_oauth:
 #        registration_form: my_registration_form
 #        account_connector: my_link_provider # can be the same as your user provider
 
-    # optional HTTP Client configuration
-    http_client:
-        timeout:       5
-        verify_peer:   true
-        ignore_errors: true
-        max_redirects: 5
-
-    # allows to switch templating engine for bundle views
-    #templating_engine: "php"
+    # allows to change rule that is used for authentication checks
+    grant_rule: 'IS_AUTHENTICATED_FULLY' # default 'IS_AUTHENTICATED_REMEMBERED'
 
 ```
 

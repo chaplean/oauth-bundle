@@ -11,36 +11,38 @@
 
 namespace HWI\Bundle\OAuthBundle\OAuth\ResourceOwner;
 
-use Symfony\Component\OptionsResolver\OptionsResolverInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
- * WindowsLiveResourceOwner
+ * WindowsLiveResourceOwner.
  *
  * @author Alexander <iam.asm89@gmail.com>
  */
 class WindowsLiveResourceOwner extends GenericOAuth2ResourceOwner
 {
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     protected $paths = array(
         'identifier' => 'id',
-        'nickname'   => 'name',
-        'realname'   => 'name',
-        'email'      => 'emails.account', // requires 'wl.emails' scope
+        'nickname' => 'name',
+        'realname' => 'name',
+        'email' => 'emails.account', // requires 'wl.emails' scope
     );
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
-    protected function configureOptions(OptionsResolverInterface $resolver)
+    protected function configureOptions(OptionsResolver $resolver)
     {
         parent::configureOptions($resolver);
 
         $resolver->setDefaults(array(
             'authorization_url' => 'https://login.live.com/oauth20_authorize.srf',
-            'access_token_url'  => 'https://login.live.com/oauth20_token.srf',
-            'infos_url'         => 'https://apis.live.net/v5.0/me',
+            'access_token_url' => 'https://login.live.com/oauth20_token.srf',
+            'infos_url' => 'https://apis.live.net/v5.0/me',
+
+            'scope' => 'wl.signin',
         ));
     }
 }

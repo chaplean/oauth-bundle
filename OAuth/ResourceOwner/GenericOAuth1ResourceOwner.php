@@ -11,37 +11,38 @@
 
 namespace HWI\Bundle\OAuthBundle\OAuth\ResourceOwner;
 
-use Buzz\Message\RequestInterface as HttpRequestInterface;
 use HWI\Bundle\OAuthBundle\Security\Core\Authentication\Token\OAuthToken;
+use HWI\Bundle\OAuthBundle\Security\OAuthErrorHandler;
 use HWI\Bundle\OAuthBundle\Security\OAuthUtils;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\OptionsResolver\OptionsResolverInterface;
+use Psr\Http\Message\ResponseInterface;
+use Symfony\Component\HttpFoundation\Request as HttpRequest;
+use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 
 /**
- * GenericOAuth1ResourceOwner
+ * GenericOAuth1ResourceOwner.
  *
  * @author Francisco Facioni <fran6co@gmail.com>
  */
 class GenericOAuth1ResourceOwner extends AbstractResourceOwner
 {
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function getUserInformation(array $accessToken, array $extraParameters = array())
     {
-        $parameters = array_merge(array(
-            'oauth_consumer_key'     => $this->options['client_id'],
-            'oauth_timestamp'        => time(),
-            'oauth_nonce'            => $this->generateNonce(),
-            'oauth_version'          => '1.0',
+        $parameters = array_merge([
+            'oauth_consumer_key' => $this->options['client_id'],
+            'oauth_timestamp' => time(),
+            'oauth_nonce' => $this->generateNonce(),
+            'oauth_version' => '1.0',
             'oauth_signature_method' => $this->options['signature_method'],
-            'oauth_token'            => $accessToken['oauth_token'],
-        ), $extraParameters);
+            'oauth_token' => $accessToken['oauth_token'],
+        ], $extraParameters);
 
         $url = $this->options['infos_url'];
         $parameters['oauth_signature'] = OAuthUtils::signRequest(
-            HttpRequestInterface::METHOD_GET,
+            'GET',
             $url,
             $parameters,
             $this->options['client_secret'],
@@ -49,10 +50,10 @@ class GenericOAuth1ResourceOwner extends AbstractResourceOwner
             $this->options['signature_method']
         );
 
-        $content = $this->doGetUserInformationRequest($url, $parameters)->getContent();
+        $content = $this->doGetUserInformationRequest($url, $parameters);
 
         $response = $this->getUserResponse();
-        $response->setResponse($content);
+        $response->setData($content instanceof ResponseInterface ? (string) $content->getBody() : $content);
         $response->setResourceOwner($this);
         $response->setOAuthToken(new OAuthToken($accessToken));
 
@@ -60,7 +61,7 @@ class GenericOAuth1ResourceOwner extends AbstractResourceOwner
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function getAuthorizationUrl($redirectUri, array $extraParameters = array())
     {
@@ -70,27 +71,33 @@ class GenericOAuth1ResourceOwner extends AbstractResourceOwner
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
-    public function getAccessToken(Request $request, $redirectUri, array $extraParameters = array())
+    public function getAccessToken(HttpRequest $request, $redirectUri, array $extraParameters = array())
     {
-        if (null === $requestToken = $this->storage->fetch($this, $request->query->get('oauth_token'))) {
-            throw new \RuntimeException('No request token found in the storage.');
+        OAuthErrorHandler::handleOAuthError($request);
+
+        try {
+            if (null === $requestToken = $this->storage->fetch($this, $request->query->get('oauth_token'))) {
+                throw new \RuntimeException('No request token found in the storage.');
+            }
+        } catch (\InvalidArgumentException $e) {
+            throw new AuthenticationException('Given token is not valid.');
         }
 
         $parameters = array_merge(array(
-            'oauth_consumer_key'     => $this->options['client_id'],
-            'oauth_timestamp'        => time(),
-            'oauth_nonce'            => $this->generateNonce(),
-            'oauth_version'          => '1.0',
+            'oauth_consumer_key' => $this->options['client_id'],
+            'oauth_timestamp' => time(),
+            'oauth_nonce' => $this->generateNonce(),
+            'oauth_version' => '1.0',
             'oauth_signature_method' => $this->options['signature_method'],
-            'oauth_token'            => $requestToken['oauth_token'],
-            'oauth_verifier'         => $request->query->get('oauth_verifier'),
+            'oauth_token' => $requestToken['oauth_token'],
+            'oauth_verifier' => $request->query->get('oauth_verifier'),
         ), $extraParameters);
 
         $url = $this->options['access_token_url'];
         $parameters['oauth_signature'] = OAuthUtils::signRequest(
-            HttpRequestInterface::METHOD_POST,
+            'POST',
             $url,
             $parameters,
             $this->options['client_secret'],
@@ -105,7 +112,7 @@ class GenericOAuth1ResourceOwner extends AbstractResourceOwner
             throw new AuthenticationException(sprintf('OAuth error: "%s"', $response['oauth_problem']));
         }
 
-        if (!isset($response['oauth_token']) || !isset($response['oauth_token_secret'])) {
+        if (!isset($response['oauth_token'], $response['oauth_token_secret'])) {
             throw new AuthenticationException('Not a valid request token.');
         }
 
@@ -113,9 +120,9 @@ class GenericOAuth1ResourceOwner extends AbstractResourceOwner
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
-    public function handles(Request $request)
+    public function handles(HttpRequest $request)
     {
         return $request->query->has('oauth_token');
     }
@@ -130,24 +137,24 @@ class GenericOAuth1ResourceOwner extends AbstractResourceOwner
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function getRequestToken($redirectUri, array $extraParameters = array())
     {
         $timestamp = time();
 
-        $parameters = array_merge(array(
-            'oauth_consumer_key'     => $this->options['client_id'],
-            'oauth_timestamp'        => $timestamp,
-            'oauth_nonce'            => $this->generateNonce(),
-            'oauth_version'          => '1.0',
-            'oauth_callback'         => $redirectUri,
+        $parameters = array_merge([
+            'oauth_consumer_key' => $this->options['client_id'],
+            'oauth_timestamp' => $timestamp,
+            'oauth_nonce' => $this->generateNonce(),
+            'oauth_version' => '1.0',
+            'oauth_callback' => $redirectUri,
             'oauth_signature_method' => $this->options['signature_method'],
-        ), $extraParameters);
+        ], $extraParameters);
 
         $url = $this->options['request_token_url'];
         $parameters['oauth_signature'] = OAuthUtils::signRequest(
-            HttpRequestInterface::METHOD_POST,
+            'POST',
             $url,
             $parameters,
             $this->options['client_secret'],
@@ -155,7 +162,7 @@ class GenericOAuth1ResourceOwner extends AbstractResourceOwner
             $this->options['signature_method']
         );
 
-        $apiResponse = $this->httpRequest($url, null, $parameters, array(), HttpRequestInterface::METHOD_POST);
+        $apiResponse = $this->httpRequest($url, null, array(), 'POST', $parameters);
 
         $response = $this->getResponseContent($apiResponse);
 
@@ -163,11 +170,11 @@ class GenericOAuth1ResourceOwner extends AbstractResourceOwner
             throw new AuthenticationException(sprintf('OAuth error: "%s"', $response['oauth_problem']));
         }
 
-        if (isset($response['oauth_callback_confirmed']) && ($response['oauth_callback_confirmed'] != 'true')) {
+        if (isset($response['oauth_callback_confirmed']) && 'true' !== $response['oauth_callback_confirmed']) {
             throw new AuthenticationException('Defined OAuth callback was not confirmed.');
         }
 
-        if (!isset($response['oauth_token']) || !isset($response['oauth_token_secret'])) {
+        if (!isset($response['oauth_token'], $response['oauth_token_secret'])) {
             throw new AuthenticationException('Not a valid request token.');
         }
 
@@ -179,61 +186,55 @@ class GenericOAuth1ResourceOwner extends AbstractResourceOwner
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
-    protected function httpRequest($url, $content = null, $parameters = array(), $headers = array(), $method = null)
+    protected function doGetTokenRequest($url, array $parameters = array())
+    {
+        return $this->httpRequest($url, null, array(), 'POST', $parameters);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function doGetUserInformationRequest($url, array $parameters = array())
+    {
+        return $this->httpRequest($url, null, array(), null, $parameters);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function httpRequest($url, $content = null, array $headers = array(), $method = null, array $parameters = array())
     {
         foreach ($parameters as $key => $value) {
-            $parameters[$key] = $key . '="' . rawurlencode($value) . '"';
+            $parameters[$key] = $key.'="'.rawurlencode($value).'"';
         }
 
         if (!$this->options['realm']) {
-            array_unshift($parameters, 'realm="' . rawurlencode($this->options['realm']) . '"');
+            array_unshift($parameters, 'realm="'.rawurlencode($this->options['realm']).'"');
         }
 
-        $headers[] = 'Authorization: OAuth ' . implode(', ', $parameters);
+        $headers['Authorization'] = 'OAuth '.implode(', ', $parameters);
 
         return parent::httpRequest($url, $content, $headers, $method);
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
-    protected function doGetTokenRequest($url, array $parameters = array())
-    {
-        return $this->httpRequest($url, null, $parameters, array(), HttpRequestInterface::METHOD_POST);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected function doGetUserInformationRequest($url, array $parameters = array())
-    {
-        return $this->httpRequest($url, null, $parameters);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected function configureOptions(OptionsResolverInterface $resolver)
+    protected function configureOptions(OptionsResolver $resolver)
     {
         parent::configureOptions($resolver);
 
-        $resolver->setRequired(array(
+        $resolver->setRequired([
             'request_token_url',
-        ));
+        ]);
 
-        $resolver->setDefaults(array(
-            'realm'            => null,
+        $resolver->setDefaults([
+            'realm' => null,
             'signature_method' => 'HMAC-SHA1',
-        ));
+        ]);
 
-        if (method_exists($resolver, 'setDefined')) {
-            $resolver->setAllowedValues('signature_method', array('HMAC-SHA1', 'RSA-SHA1', 'PLAINTEXT'));
-        } else {
-            $resolver->setAllowedValues(array(
-                'signature_method' => array('HMAC-SHA1', 'RSA-SHA1', 'PLAINTEXT'),
-            ));
-        }
+        $resolver->setAllowedValues('signature_method', ['HMAC-SHA1', 'RSA-SHA1', 'PLAINTEXT']);
     }
 }

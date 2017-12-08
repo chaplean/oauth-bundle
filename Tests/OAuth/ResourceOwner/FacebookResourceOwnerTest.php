@@ -16,6 +16,7 @@ use Symfony\Component\HttpFoundation\Request;
 
 class FacebookResourceOwnerTest extends GenericOAuth2ResourceOwnerTest
 {
+    protected $resourceOwnerClass = FacebookResourceOwner::class;
     protected $userResponse = <<<json
 {
     "id": "1",
@@ -25,8 +26,10 @@ json;
 
     protected $paths = array(
         'identifier' => 'id',
-        'nickname'   => 'username',
-        'realname'   => 'name',
+        'nickname' => 'username',
+        'firstname' => 'first_name',
+        'lastname' => 'last_name',
+        'realname' => 'name',
     );
 
     /**
@@ -34,7 +37,7 @@ json;
      */
     public function testGetAccessTokenFailedResponse()
     {
-        $this->mockBuzz('{"error": {"message": "invalid"}}', 'application/json; charset=utf-8');
+        $this->mockHttpClient('{"error": {"message": "invalid"}}', 'application/json; charset=utf-8');
         $request = new Request(array('code' => 'code'));
 
         $this->resourceOwner->getAccessToken($request, 'http://redirect.to/');
@@ -45,7 +48,7 @@ json;
         $resourceOwner = $this->createResourceOwner($this->resourceOwnerName, array('auth_type' => 'rerequest'));
 
         $this->assertEquals(
-            $this->options['authorization_url'] . '&response_type=code&client_id=clientid&state=random&redirect_uri=http%3A%2F%2Fredirect.to%2F&auth_type=rerequest',
+            $this->options['authorization_url'].'&response_type=code&client_id=clientid&state=random&redirect_uri=http%3A%2F%2Fredirect.to%2F&auth_type=rerequest',
             $resourceOwner->getAuthorizationUrl('http://redirect.to/')
         );
     }
@@ -55,7 +58,7 @@ json;
         $resourceOwner = $this->createResourceOwner($this->resourceOwnerName, array('display' => 'popup', 'auth_type' => 'rerequest'));
 
         $this->assertEquals(
-            $this->options['authorization_url'] . '&response_type=code&client_id=clientid&state=random&redirect_uri=http%3A%2F%2Fredirect.to%2F&display=popup&auth_type=rerequest',
+            $this->options['authorization_url'].'&response_type=code&client_id=clientid&state=random&redirect_uri=http%3A%2F%2Fredirect.to%2F&display=popup&auth_type=rerequest',
             $resourceOwner->getAuthorizationUrl('http://redirect.to/')
         );
     }
@@ -65,7 +68,7 @@ json;
         $resourceOwner = $this->createResourceOwner($this->resourceOwnerName, array('display' => 'popup'));
 
         $this->assertEquals(
-            $this->options['authorization_url'] . '&response_type=code&client_id=clientid&state=random&redirect_uri=http%3A%2F%2Fredirect.to%2F&display=popup',
+            $this->options['authorization_url'].'&response_type=code&client_id=clientid&state=random&redirect_uri=http%3A%2F%2Fredirect.to%2F&display=popup',
             $resourceOwner->getAuthorizationUrl('http://redirect.to/')
         );
     }
@@ -80,14 +83,16 @@ json;
 
     public function testRevokeToken()
     {
-        $this->mockBuzz('true', 'application/json');
+        $this->httpResponseHttpCode = 200;
+        $this->mockHttpClient('{"access_token": "bar"}', 'application/json');
 
         $this->assertTrue($this->resourceOwner->revokeToken('token'));
     }
 
     public function testRevokeTokenFails()
     {
-        $this->mockBuzz('false', 'application/json');
+        $this->httpResponseHttpCode = 401;
+        $this->mockHttpClient('{"access_token": "bar"}', 'application/json');
 
         $this->assertFalse($this->resourceOwner->revokeToken('token'));
     }
@@ -97,18 +102,13 @@ json;
      */
     public function testGetAccessTokenErrorResponse()
     {
-        $this->mockBuzz();
+        $this->mockHttpClient();
 
         $request = new Request(array(
-            'error_code'    => 901,
-            'error_message' => 'This app is in sandbox mode.  Edit the app configuration at http://developers.facebook.com/apps to make the app publicly visible.'
+            'error_code' => 901,
+            'error_message' => 'This app is in sandbox mode.  Edit the app configuration at http://developers.facebook.com/apps to make the app publicly visible.',
         ));
 
         $this->resourceOwner->getAccessToken($request, 'http://redirect.to/');
-    }
-
-    protected function setUpResourceOwner($name, $httpUtils, array $options)
-    {
-        return new FacebookResourceOwner($this->buzzClient, $httpUtils, $options, $name, $this->storage);
     }
 }

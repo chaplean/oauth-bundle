@@ -15,6 +15,7 @@ use HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\EveOnlineResourceOwner;
 
 class EveOnlineResourceOwnerTest extends GenericOAuth2ResourceOwnerTest
 {
+    protected $resourceOwnerClass = EveOnlineResourceOwner::class;
     protected $userResponse = <<<json
 {
     "CharacterID": "1",
@@ -24,12 +25,7 @@ json;
 
     protected $paths = array(
         'identifier' => 'CharacterID',
-        'nickname'   => 'CharacterName',
-        'realname'   => 'CharacterName',
+        'nickname' => 'CharacterName',
+        'realname' => 'CharacterName',
     );
-
-    protected function setUpResourceOwner($name, $httpUtils, array $options)
-    {
-        return new EveOnlineResourceOwner($this->buzzClient, $httpUtils, $options, $name, $this->storage);
-    }
 }

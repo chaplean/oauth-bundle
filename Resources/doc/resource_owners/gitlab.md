@@ -1,12 +1,10 @@
-Step 2x: Setup Wechat
-=========================
-First you will have to register your application on Wechat. Check out the
-documentation for more information: <http://mp.weixin.qq.com/wiki/home/index.html>
+Step 2x: Setup GitLab
+=====================
+First you will have to register your application on GitLab. Check out the
+documentation for more information: https://docs.gitlab.com/ee/integration/oauth_provider.html.
 
-To add new API Key, you should go to: <https://mp.weixin.qq.com/>
-
-Next configure a resource owner of type `wechat` with appropriate
-`client_id`, `client_secret`.
+Next configure a resource owner of type `gitlab` with appropriate
+`client_id` & `client_secret`.
 
 ```yaml
 # app/config/config.yml
@@ -14,7 +12,7 @@ Next configure a resource owner of type `wechat` with appropriate
 hwi_oauth:
     resource_owners:
         any_name:
-            type:                wechat
+            type:                gitlab
             client_id:           <client_id>
             client_secret:       <client_secret>
 ```

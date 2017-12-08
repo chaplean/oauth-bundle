@@ -12,9 +12,11 @@
 namespace HWI\Bundle\OAuthBundle\Tests\OAuth\ResourceOwner;
 
 use HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\GoogleResourceOwner;
+use Symfony\Component\Security\Http\HttpUtils;
 
 class GoogleResourceOwnerTest extends GenericOAuth2ResourceOwnerTest
 {
+    protected $resourceOwnerClass = GoogleResourceOwner::class;
     protected $userResponse = <<<json
 {
     "id": "1",
@@ -23,15 +25,17 @@ class GoogleResourceOwnerTest extends GenericOAuth2ResourceOwnerTest
 json;
 
     protected $paths = array(
-        'identifier'     => 'id',
-        'nickname'       => 'name',
-        'realname'       => 'name',
-        'email'          => 'email',
+        'identifier' => 'id',
+        'nickname' => 'name',
+        'realname' => 'name',
+        'firstname' => 'given_name',
+        'lastname' => 'family_name',
+        'email' => 'email',
         'profilepicture' => 'picture',
     );
 
     protected $expectedUrls = array(
-        'authorization_url'      => 'http://user.auth/?test=2&response_type=code&client_id=clientid&scope=read&state=random&redirect_uri=http%3A%2F%2Fredirect.to%2F',
+        'authorization_url' => 'http://user.auth/?test=2&response_type=code&client_id=clientid&scope=read&state=random&redirect_uri=http%3A%2F%2Fredirect.to%2F',
         'authorization_url_csrf' => 'http://user.auth/?test=2&response_type=code&client_id=clientid&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.profile&state=random&redirect_uri=http%3A%2F%2Fredirect.to%2F&access_type=offline',
     );
 
@@ -86,33 +90,41 @@ json;
             $this->options['authorization_url'].'&response_type=code&client_id=clientid&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.profile&state=random&redirect_uri=http%3A%2F%2Fredirect.to%2F&access_type=offline&hd=mycollege.edu',
             $resourceOwner->getAuthorizationUrl('http://redirect.to/')
         );
+
+        $resourceOwner = $this->createResourceOwner($this->resourceOwnerName, array('hd' => 'mycollege.edu, mycollege.org'));
+        $this->assertEquals(
+            $this->options['authorization_url'].'&response_type=code&client_id=clientid&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.profile&state=random&redirect_uri=http%3A%2F%2Fredirect.to%2F&access_type=offline&hd=mycollege.edu&mycollege.org',
+            $resourceOwner->getAuthorizationUrl('http://redirect.to/')
+        );
     }
 
     public function testRevokeToken()
     {
-        $this->buzzResponseHttpCode = 200;
-        $this->mockBuzz('{"access_token": "bar"}', 'application/json');
+        $this->httpResponseHttpCode = 200;
+        $this->mockHttpClient('{"access_token": "bar"}', 'application/json');
 
         $this->assertTrue($this->resourceOwner->revokeToken('token'));
     }
 
     public function testRevokeTokenFails()
     {
-        $this->buzzResponseHttpCode = 401;
-        $this->mockBuzz('{"access_token": "bar"}', 'application/json');
+        $this->httpResponseHttpCode = 401;
+        $this->mockHttpClient('{"access_token": "bar"}', 'application/json');
 
         $this->assertFalse($this->resourceOwner->revokeToken('token'));
     }
 
-    protected function setUpResourceOwner($name, $httpUtils, array $options)
+    protected function setUpResourceOwner($name, HttpUtils $httpUtils, array $options)
     {
-        $options = array_merge(
-            array(
-                'access_type' => 'offline'
-            ),
-            $options
+        return parent::setUpResourceOwner(
+            $name,
+            $httpUtils,
+            array_merge(
+                array(
+                    'access_type' => 'offline',
+                ),
+                $options
+            )
         );
-
-        return new GoogleResourceOwner($this->buzzClient, $httpUtils, $options, $name, $this->storage);
     }
 }

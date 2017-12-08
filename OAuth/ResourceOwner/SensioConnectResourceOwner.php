@@ -11,47 +11,47 @@
 
 namespace HWI\Bundle\OAuthBundle\OAuth\ResourceOwner;
 
-use Buzz\Message\RequestInterface as HttpRequestInterface;
-use Symfony\Component\OptionsResolver\OptionsResolverInterface;
+use HWI\Bundle\OAuthBundle\OAuth\Response\SensioConnectUserResponse;
+use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
- * SensioConnectResourceOwner
+ * SensioConnectResourceOwner.
  *
  * @author Joseph Bielawski <stloyd@gmail.com>
  */
 class SensioConnectResourceOwner extends GenericOAuth2ResourceOwner
 {
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     protected function doGetTokenRequest($url, array $parameters = array())
     {
-        return $this->httpRequest($this->options['access_token_url'], $parameters, array(), HttpRequestInterface::METHOD_POST);
+        return $this->httpRequest($this->options['access_token_url'], $parameters, array(), 'POST');
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     protected function doGetUserInformationRequest($url, array $parameters = array())
     {
-        return $this->httpRequest($url, null, array('Accept: application/vnd.com.sensiolabs.connect+xml'));
+        return $this->httpRequest($url, null, array('Accept' => 'application/vnd.com.sensiolabs.connect+xml'));
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
-    protected function configureOptions(OptionsResolverInterface $resolver)
+    protected function configureOptions(OptionsResolver $resolver)
     {
         parent::configureOptions($resolver);
 
         $resolver->setDefaults(array(
-            'authorization_url'        => 'https://connect.sensiolabs.com/oauth/authorize',
-            'access_token_url'         => 'https://connect.sensiolabs.com/oauth/access_token',
-            'infos_url'                => 'https://connect.sensiolabs.com/api',
+            'authorization_url' => 'https://connect.sensiolabs.com/oauth/authorize',
+            'access_token_url' => 'https://connect.sensiolabs.com/oauth/access_token',
+            'infos_url' => 'https://connect.sensiolabs.com/api',
 
-            'user_response_class'      => '\HWI\Bundle\OAuthBundle\OAuth\Response\SensioConnectUserResponse',
+            'user_response_class' => SensioConnectUserResponse::class,
 
-            'response_type'            => 'code',
+            'response_type' => 'code',
 
             'use_bearer_authorization' => false,
         ));

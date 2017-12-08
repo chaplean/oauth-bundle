@@ -11,12 +11,14 @@
 
 namespace HWI\Bundle\OAuthBundle\Tests\OAuth\ResourceOwner;
 
-use Buzz\Exception\RequestException;
+use Http\Client\Exception\TransferException;
 use HWI\Bundle\OAuthBundle\OAuth\Exception\HttpTransportException;
 use HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\SinaWeiboResourceOwner;
+use HWI\Bundle\OAuthBundle\Tests\Fixtures\CustomUserResponse;
 
 class SinaWeiboResourceOwnerTest extends GenericOAuth2ResourceOwnerTest
 {
+    protected $resourceOwnerClass = SinaWeiboResourceOwner::class;
     protected $userResponse = <<<json
 {
     "id": "1",
@@ -31,17 +33,12 @@ json;
         'profilepicture' => 'profile_image_url',
     );
 
-    protected function setUpResourceOwner($name, $httpUtils, array $options)
-    {
-        return new SinaWeiboResourceOwner($this->buzzClient, $httpUtils, $options, $name, $this->storage);
-    }
-
     public function testGetUserInformation()
     {
-        $this->mockBuzz($this->userResponse);
+        $this->mockHttpClient($this->userResponse);
 
         /**
-         * @var $userResponse \HWI\Bundle\OAuthBundle\OAuth\Response\AbstractUserResponse
+         * @var \HWI\Bundle\OAuthBundle\OAuth\Response\AbstractUserResponse
          */
         $userResponse = $this->resourceOwner->getUserInformation(array('access_token' => 'token', 'uid' => '1'));
 
@@ -54,9 +51,9 @@ json;
 
     public function testGetUserInformationFailure()
     {
-        $exception = new RequestException();
+        $exception = new TransferException();
 
-        $this->buzzClient->expects($this->once())
+        $this->httpClient->expects($this->once())
             ->method('send')
             ->will($this->throwException($exception));
 
@@ -70,13 +67,13 @@ json;
 
     public function testCustomResponseClass()
     {
-        $class         = '\HWI\Bundle\OAuthBundle\Tests\Fixtures\CustomUserResponse';
+        $class = CustomUserResponse::class;
         $resourceOwner = $this->createResourceOwner('oauth2', array('user_response_class' => $class));
 
-        $this->mockBuzz();
+        $this->mockHttpClient();
 
         /**
-         * @var $userResponse \HWI\Bundle\OAuthBundle\Tests\Fixtures\CustomUserResponse
+         * @var \HWI\Bundle\OAuthBundle\Tests\Fixtures\CustomUserResponse
          */
         $userResponse = $resourceOwner->getUserInformation(array('access_token' => 'token', 'uid' => '1'));
 

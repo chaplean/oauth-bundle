@@ -11,8 +11,8 @@ To make this bundle work you need to add the following to your app/config/config
 # app/config/config.yml
 
 hwi_oauth:
-    # name of the firewall in which this bundle is active, this setting MUST be set
-    firewall_name: secured_area
+    # list of names of the firewalls in which this bundle is active, this setting MUST be set
+    firewall_names: [secured_area]
 
     # an optional setting to configure a query string parameter which can be used to redirect
     # the user after authentication, e.g. /connect/facebook?_destination=/my/destination will
@@ -35,25 +35,30 @@ hwi_oauth:
 ##### Built-in resource owners:
 
 - [37signals](resource_owners/37signals.md)
+- [Asana](resource_owners/asana.md)
 - [Amazon](resource_owners/amazon.md)
 - [Auth0](resource_owners/auth0.md)
 - [Azure](resource_owners/azure.md)
 - [Bitbucket](resource_owners/bitbucket.md)
 - [Bitly](resource_owners/bitly.md)
+- [BufferApp](resource_owners/bufferapp.md)
+- [Clever](resource_owners/clever.md)
 - [DeviantArt](resource_owners/deviantart.md)
 - [Discogs](resource_owners/discogs.md)
 - [Disqus](resource_owners/disqus.md)
 - [Dropbox](resource_owners/dropbox.md)
-- [EVE Online] (resource_owners/eve_online.md)
+- [EVE Online](resource_owners/eve_online.md)
 - [Eventbrite](resource_owners/eventbrite.md)
 - [Facebook](resource_owners/facebook.md)
 - [FI-WARE](resource_owners/fiware.md)
 - [Flickr](resource_owners/flickr.md)
 - [Foursquare](resource_owners/foursquare.md)
 - [GitHub](resource_owners/github.md)
+- [GitLab](resource_owners/gitlab.md)
 - [Google](resource_owners/google.md)
 - [Hubic](resource_owners/hubic.md)
 - [Instagram](resource_owners/instagram.md)
+- [itembase](resource_owners/itembase.md)
 - [Jira](resource_owners/jira.md)
 - [Linkedin](resource_owners/linkedin.md)
 - [Mail.ru](resource_owners/mailru.md)
@@ -68,16 +73,33 @@ hwi_oauth:
 - [Soundcloud](resource_owners/soundcloud.md)
 - [Stack Exchange](resource_owners/stack_exchange.md)
 - [Stereomood](resource_owners/stereomood.md)
-- [Toshl] (resource_owners/toshl.md)
-- [Trello] (resource_owners/trello.md)
-- [Twitch] (resource_owners/twitch.md)
-- [Twitter] (resource_owners/twitter.md)
+- [Strava](resource_owners/strava.md)
+- [Toshl](resource_owners/toshl.md)
+- [Trello](resource_owners/trello.md)
+- [Twitch](resource_owners/twitch.md)
+- [Twitter](resource_owners/twitter.md)
+- [Wunderlist](resource_owners/wunderlist.md)
 - [Vkontakte](resource_owners/vkontakte.md)
 - [Windows Live](resource_owners/windows_live.md)
 - [XING](resource_owners/xing.md)
 - [Yahoo](resource_owners/yahoo.md)
 - [Yandex](resource_owners/yandex.md)
 - [Others](resource_owners/others.md)
+
+### CSRF protection
+
+Set the _csrf_ option to **true** in the resource owner's configuration in order to protect your users from [CSRF](https://www.owasp.org/index.php/Cross-Site_Request_Forgery_(CSRF)) attacks.
+```yaml
+# app/config/config.yml
+hwi_oauth:
+    resource_owners:
+        any_name:
+            type:                resource_owner_of_choice
+            client_id:           <client_id>
+            client_secret:       <client_secret>
+            options:
+                csrf: true
+```
 
 ### Continue to the next step!
 When you're done. Continue by configuring the security layer.

@@ -11,38 +11,38 @@
 
 namespace HWI\Bundle\OAuthBundle\OAuth\ResourceOwner;
 
-use Symfony\Component\OptionsResolver\OptionsResolverInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
- * AmazonResourceOwner
+ * AmazonResourceOwner.
  *
  * @author Fabian Kiss <fabian.kiss@ymc.ch>
  */
 class AmazonResourceOwner extends GenericOAuth2ResourceOwner
 {
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     protected $paths = array(
         'identifier' => 'user_id',
-        'nickname'   => 'name',
-        'realname'   => 'name',
-        'email'      => 'email',
+        'nickname' => 'name',
+        'realname' => 'name',
+        'email' => 'email',
     );
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
-    protected function configureOptions(OptionsResolverInterface $resolver)
+    protected function configureOptions(OptionsResolver $resolver)
     {
         parent::configureOptions($resolver);
 
         $resolver->setDefaults(array(
             'authorization_url' => 'https://www.amazon.com/ap/oa',
-            'access_token_url'  => 'https://api.amazon.com/auth/o2/token',
-            'infos_url'         => 'https://api.amazon.com/user/profile',
+            'access_token_url' => 'https://api.amazon.com/auth/o2/token',
+            'infos_url' => 'https://api.amazon.com/user/profile',
 
-            'scope'             => 'profile',
+            'scope' => 'profile',
         ));
     }
 }

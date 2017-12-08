@@ -15,6 +15,7 @@ use HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\RedditResourceOwner;
 
 class RedditResourceOwnerTest extends GenericOAuth2ResourceOwnerTest
 {
+    protected $resourceOwnerClass = RedditResourceOwner::class;
     protected $userResponse = <<<json
 {
     "id": "1",
@@ -25,18 +26,13 @@ json;
     protected $csrf = true;
 
     protected $expectedUrls = array(
-        'authorization_url' => 'http://user.auth/?test=2&response_type=code&client_id=clientid&scope=identity&state=random&redirect_uri=http%3A%2F%2Fredirect.to%2F'
+        'authorization_url' => 'http://user.auth/?test=2&response_type=code&client_id=clientid&scope=identity&state=random&redirect_uri=http%3A%2F%2Fredirect.to%2F',
     );
 
     protected $paths = array(
         'identifier' => 'id',
-        'nickname'   => 'name',
-        'realname'   => null,
-        'email'      => null,
+        'nickname' => 'name',
+        'realname' => null,
+        'email' => null,
     );
-
-    protected function setUpResourceOwner($name, $httpUtils, array $options)
-    {
-        return new RedditResourceOwner($this->buzzClient, $httpUtils, $options, $name, $this->storage);
-    }
 }

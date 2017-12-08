@@ -12,34 +12,34 @@
 namespace HWI\Bundle\OAuthBundle\OAuth\ResourceOwner;
 
 use HWI\Bundle\OAuthBundle\Security\Core\Authentication\Token\OAuthToken;
-use Symfony\Component\OptionsResolver\OptionsResolverInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
- * MailRuResourceOwner
+ * MailRuResourceOwner.
  *
  * @author Gaponov Igor <jiminy96@gmail.com>
  */
 class MailRuResourceOwner extends GenericOAuth2ResourceOwner
 {
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     protected $paths = array(
         'identifier' => 'uid',
-        'nickname'   => 'nick',
-        'realname'   => 'nick',
-        'email'      => 'email',
+        'nickname' => 'nick',
+        'realname' => 'nick',
+        'email' => 'email',
     );
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function getUserInformation(array $accessToken, array $extraParameters = array())
     {
         $params = array(
-            'app_id'      => $this->options['client_id'],
-            'method'      => 'users.getInfo',
-            'secure'      => '1',
+            'app_id' => $this->options['client_id'],
+            'method' => 'users.getInfo',
+            'secure' => '1',
             'session_key' => $accessToken['access_token'],
         );
 
@@ -47,14 +47,14 @@ class MailRuResourceOwner extends GenericOAuth2ResourceOwner
 
         $url = $this->normalizeUrl($this->options['infos_url'], $params);
 
-        $content = $this->doGetUserInformationRequest($url)->getContent();
-        $content = json_decode($content);
+        $content = (string) $this->doGetUserInformationRequest($url)->getBody();
+        $content = json_decode($content, true);
         if (isset($content[0])) {
             $content = (array) $content[0];
         }
 
         $response = $this->getUserResponse();
-        $response->setResponse($content);
+        $response->setData($content);
         $response->setResourceOwner($this);
         $response->setOAuthToken(new OAuthToken($accessToken));
 
@@ -62,16 +62,16 @@ class MailRuResourceOwner extends GenericOAuth2ResourceOwner
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
-    protected function configureOptions(OptionsResolverInterface $resolver)
+    protected function configureOptions(OptionsResolver $resolver)
     {
         parent::configureOptions($resolver);
 
         $resolver->setDefaults(array(
-            'authorization_url'   => 'https://connect.mail.ru/oauth/authorize',
-            'access_token_url'    => 'https://connect.mail.ru/oauth/token',
-            'infos_url'           => 'http://www.appsmail.ru/platform/api',
+            'authorization_url' => 'https://connect.mail.ru/oauth/authorize',
+            'access_token_url' => 'https://connect.mail.ru/oauth/token',
+            'infos_url' => 'http://www.appsmail.ru/platform/api',
         ));
     }
 }
