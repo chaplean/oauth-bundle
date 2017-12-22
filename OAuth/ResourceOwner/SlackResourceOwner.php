@@ -1,10 +1,10 @@
 <?php
+
 namespace HWI\Bundle\OAuthBundle\OAuth\ResourceOwner;
 
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use HWI\Bundle\OAuthBundle\Security\Core\Authentication\Token\OAuthToken;
-use HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\GenericOAuth2ResourceOwner;
 
 /**
  * Class SlackResourceOwner.
@@ -100,7 +100,7 @@ class SlackResourceOwner extends GenericOAuth2ResourceOwner
             $response = $this->doGetUserInformationRequest($url);
         }
 
-        $infosContent = $response->getContent();
+        $infosContent = $response->getBody();
 
         $user = null;
 
@@ -116,7 +116,7 @@ class SlackResourceOwner extends GenericOAuth2ResourceOwner
             );
             $userResponse = $this->httpRequest($url);
 
-            $userContent = $userResponse->getContent();
+            $userContent = $userResponse->getBody();
 
             if ($userContent != '') {
                 $userJson = json_decode($userContent, true);
@@ -133,7 +133,7 @@ class SlackResourceOwner extends GenericOAuth2ResourceOwner
         }
 
         $response = $this->getUserResponse();
-        $response->setResponse(json_encode($user));
+        $response->setData($user);
         $response->setResourceOwner($this);
         $response->setOAuthToken(new OAuthToken($accessToken));
 
