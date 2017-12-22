@@ -1,7 +1,7 @@
 <?php
 namespace HWI\Bundle\OAuthBundle\OAuth\ResourceOwner;
 
-use Symfony\Component\OptionsResolver\OptionsResolverInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use HWI\Bundle\OAuthBundle\Security\Core\Authentication\Token\OAuthToken;
 use HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\GenericOAuth2ResourceOwner;
@@ -16,26 +16,26 @@ use HWI\Bundle\OAuthBundle\OAuth\ResourceOwner\GenericOAuth2ResourceOwner;
  */
 class SlackResourceOwner extends GenericOAuth2ResourceOwner
 {
-    protected $paths = array(
+    protected $paths = [
         'identifier' => 'id',
         'nickname'   => 'name',
         'realname'   => 'profile.real_name',
         'email'      => 'profile.email',
-    );
+    ];
 
     /**
      * Configure options.
      *
-     * @param OptionsResolverInterface $resolver Resolver.
+     * @param OptionsResolver $resolver Resolver.
      *
      * @return void
      */
-    protected function configureOptions(OptionsResolverInterface $resolver)
+    protected function configureOptions(OptionsResolver $resolver)
     {
         parent::configureOptions($resolver);
 
         $resolver->setDefaults(
-            array(
+            [
                 'authorization_url'        => 'https://slack.com/oauth/authorize',
                 'access_token_url'         => 'https://slack.com/api/oauth.access',
                 'infos_url'                => 'https://slack.com/api/auth.test',
@@ -43,10 +43,10 @@ class SlackResourceOwner extends GenericOAuth2ResourceOwner
                 'scope'                    => 'identify,read,post',
                 'use_commas_in_scope'      => true,
                 'use_bearer_authorization' => false
-            )
+            ]
         );
 
-        $resolver->setDefined(array('team'));
+        $resolver->setDefined(['team']);
     }
 
     /**
@@ -57,7 +57,7 @@ class SlackResourceOwner extends GenericOAuth2ResourceOwner
      *
      * @return string
      */
-    public function getAuthorizationUrl($redirectUri, array $extraParameters = array())
+    public function getAuthorizationUrl($redirectUri, array $extraParameters = [])
     {
         if ($this->options['csrf']) {
             if (null === $this->state) {
@@ -68,14 +68,14 @@ class SlackResourceOwner extends GenericOAuth2ResourceOwner
         }
 
         $parameters = array_merge(
-            array(
+            [
                 'response_type' => 'code',
                 'client_id'     => $this->options['client_id'],
                 'scope'         => str_replace(' ', ',', $this->options['scope']),
                 'state'         => $this->state ? urlencode($this->state) : null,
                 'redirect_uri'  => $redirectUri,
                 'team'          => (isset($this->options['team']) ? $this->options['team'] : '')
-            ),
+            ],
             $extraParameters
         );
 
@@ -90,13 +90,13 @@ class SlackResourceOwner extends GenericOAuth2ResourceOwner
      *
      * @return mixed
      */
-    public function getUserInformation(array $accessToken, array $extraParameters = array())
+    public function getUserInformation(array $accessToken, array $extraParameters = [])
     {
         if ($this->options['use_bearer_authorization']) {
             $url = $this->normalizeUrl($this->options['infos_url']);
-            $response = $this->httpRequest($url, null, array('Authorization: Bearer ' . $accessToken['access_token']));
+            $response = $this->httpRequest($url, null, ['Authorization: Bearer ' . $accessToken['access_token']]);
         } else {
-            $url = $this->normalizeUrl($this->options['infos_url'], array('token' => $accessToken['access_token']));
+            $url = $this->normalizeUrl($this->options['infos_url'], ['token' => $accessToken['access_token']]);
             $response = $this->doGetUserInformationRequest($url);
         }
 
@@ -109,10 +109,10 @@ class SlackResourceOwner extends GenericOAuth2ResourceOwner
 
             $url = $this->normalizeUrl(
                 $this->options['user_url'],
-                array(
+                [
                     'token' => $accessToken['access_token'],
                     'user'  => $infosJson['user_id']
-                )
+                ]
             );
             $userResponse = $this->httpRequest($url);
 
